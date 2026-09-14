@@ -1,16 +1,18 @@
 .q-block {
-  padding: 1.25rem 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  margin: 0 0 1.25rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .q-block:last-of-type {
   border-bottom: none;
+  margin-bottom: 0.5rem;
 }
 
 .q-id {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.4rem;
   font-size: 0.75rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--accent);
   font-weight: 600;
@@ -18,7 +20,14 @@
 
 .q-text {
   margin: 0;
-  font-size: 1.08rem;
-  line-height: 1.45;
+  font-size: 0.98rem;
+  line-height: 1.55;
   font-weight: 500;
+  color: var(--ink);
+}
+
+.q-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
 }

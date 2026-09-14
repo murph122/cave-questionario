@@ -1,0 +1,70 @@
+.complete-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(2, 10, 16, 0.78);
+  backdrop-filter: blur(8px);
+  animation: completeFade 0.35s ease;
+}
+
+.complete-card {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 1.75rem 1.5rem;
+  background: linear-gradient(160deg, #0c2230, #081820);
+  border: 1px solid rgba(94, 234, 212, 0.4);
+  box-shadow: 0 0 40px rgba(45, 212, 191, 0.2);
+  text-align: center;
+  overflow: hidden;
+}
+
+.complete-ring {
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 90deg, transparent, rgba(45, 212, 191, 0.15), transparent 40%);
+  animation: completeSpin 10s linear infinite;
+}
+
+.complete-card h2,
+.complete-card p,
+.complete-card button {
+  position: relative;
+  z-index: 1;
+}
+
+.complete-card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.45rem;
+  color: #ecfeff;
+}
+
+.complete-card p {
+  margin: 0 0 1rem;
+  color: #94a8b5;
+  line-height: 1.55;
+}
+
+.complete-code {
+  padding: 0.65rem;
+  background: rgba(45, 212, 191, 0.1);
+  border-left: 3px solid #2dd4bf;
+  color: #5eead4 !important;
+}
+
+@keyframes completeFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes completeSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

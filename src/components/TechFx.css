@@ -1,0 +1,151 @@
+.tech-fx {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.tech-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 28%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(45, 212, 191, 0.07),
+    transparent
+  );
+  animation: techScan 7.5s ease-in-out infinite;
+}
+
+.tech-beam {
+  position: absolute;
+  top: -20%;
+  left: 35%;
+  width: 2px;
+  height: 140%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(103, 232, 249, 0.35),
+    transparent
+  );
+  filter: blur(0.5px);
+  animation: techBeam 9s ease-in-out infinite;
+}
+
+.tech-corners span {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: rgba(94, 234, 212, 0.45);
+  border-style: solid;
+  opacity: 0.7;
+  animation: techPulseSoft 3.5s ease-in-out infinite;
+}
+
+.tech-corners span:nth-child(1) {
+  top: 12px;
+  left: 12px;
+  border-width: 2px 0 0 2px;
+}
+.tech-corners span:nth-child(2) {
+  top: 12px;
+  right: 12px;
+  border-width: 2px 2px 0 0;
+}
+.tech-corners span:nth-child(3) {
+  bottom: 12px;
+  left: 12px;
+  border-width: 0 0 2px 2px;
+}
+.tech-corners span:nth-child(4) {
+  bottom: 12px;
+  right: 12px;
+  border-width: 0 2px 2px 0;
+}
+
+.tech-nodes i {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5eead4;
+  box-shadow: 0 0 12px #5eead4;
+  opacity: 0.55;
+  animation: techNode 5s ease-in-out infinite;
+}
+
+.tech-nodes i:nth-child(1) {
+  top: 18%;
+  left: 8%;
+}
+.tech-nodes i:nth-child(2) {
+  top: 42%;
+  right: 10%;
+  animation-delay: 1.2s;
+}
+.tech-nodes i:nth-child(3) {
+  bottom: 22%;
+  left: 14%;
+  animation-delay: 2.1s;
+}
+.tech-nodes i:nth-child(4) {
+  top: 28%;
+  left: 48%;
+  animation-delay: 0.6s;
+}
+
+@keyframes techScan {
+  0% {
+    transform: translateY(-40%);
+  }
+  100% {
+    transform: translateY(320%);
+  }
+}
+
+@keyframes techBeam {
+  0%,
+  100% {
+    transform: translateX(-40px) rotate(8deg);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateX(80px) rotate(8deg);
+    opacity: 0.7;
+  }
+}
+
+@keyframes techPulseSoft {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes techNode {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tech-scan,
+  .tech-beam,
+  .tech-corners span,
+  .tech-nodes i {
+    animation: none;
+  }
+}

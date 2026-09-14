@@ -5,7 +5,9 @@ import { AppShell } from '../components/AppShell'
 import { createBooking, fetchTakenSlots } from '../lib/api'
 import { useParticipantCode } from '../hooks/useParticipant'
 import { formatDateLocale, listAvailableDates, TIME_SLOTS } from '../data/slots'
-import { addLocalBooking, isSlotTakenLocally } from '../lib/storage'
+import { suggestNearbySlots } from '../lib/nearbySlots'
+import { addLocalBooking, isSlotTakenLocally, saveJson } from '../lib/storage'
+import { setAccess } from '../lib/access'
 import { useLang } from '../i18n/LangContext'
 
 export function PrenotaPage() {
@@ -21,6 +23,7 @@ export function PrenotaPage() {
   const [note, setNote] = useState('')
   const [remoteTaken, setRemoteTaken] = useState<string[]>([])
   const [error, setError] = useState('')
+  const [suggestions, setSuggestions] = useState<ReturnType<typeof suggestNearbySlots>>([])
   const [busy, setBusy] = useState(false)
 
   const dateLocale = lang === 'zh' ? 'zh-CN' : 'it-IT'
@@ -36,6 +39,21 @@ export function PrenotaPage() {
     return new Set([...remoteTaken, ...local])
   }, [date, remoteTaken])
 
+  useEffect(() => {
+    if (slotId && takenKeys.has(`${date}|${slotId}`)) {
+      setSuggestions(suggestNearbySlots(date, slotId, takenKeys, 5))
+    } else if (slotId) {
+      setSuggestions([])
+    }
+  }, [date, slotId, takenKeys])
+
+  function pickSuggestion(s: { date: string; slotId: typeof TIME_SLOTS[number]['id'] }) {
+    setDate(s.date)
+    setSlotId(s.slotId)
+    setSuggestions([])
+    setError('')
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
@@ -43,8 +61,8 @@ export function PrenotaPage() {
       setError(t('errPickSlot'))
       return
     }
-    if (!email.trim() && !phone.trim()) {
-      setError(t('errContact'))
+    if (!email.trim()) {
+      setError(t('errEmailRequired'))
       return
     }
     if (!contactName.trim()) {
@@ -52,7 +70,9 @@ export function PrenotaPage() {
       return
     }
     if (takenKeys.has(`${date}|${slotId}`)) {
-      setError(t('errSlotTaken'))
+      const near = suggestNearbySlots(date, slotId, takenKeys, 5)
+      setSuggestions(near)
+      setError(t('errSlotTakenSuggest'))
       return
     }
 
@@ -73,6 +93,14 @@ export function PrenotaPage() {
     try {
       await createBooking(booking)
       addLocalBooking(booking)
+      saveJson('participantCode', participantCode)
+      setAccess({
+        participantCode,
+        status: 'pending',
+        date,
+        slotId,
+        contactName: booking.contactName,
+      })
       navigate('/grazie', {
         state: {
           kind: 'booking',
@@ -82,7 +110,16 @@ export function PrenotaPage() {
         },
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('errGeneric'))
+      const e = err as Error & { status?: number; payload?: { taken?: string[] } }
+      if (e.status === 409 || String(e.message).includes('slot_taken')) {
+        const taken = e.payload?.taken || [...takenKeys]
+        const near = suggestNearbySlots(date, slotId, taken, 5)
+        setSuggestions(near)
+        setRemoteTaken(taken)
+        setError(t('errSlotTakenSuggest'))
+      } else {
+        setError(err instanceof Error ? err.message : t('errGeneric'))
+      }
     } finally {
       setBusy(false)
     }
@@ -98,7 +135,14 @@ export function PrenotaPage() {
 
         <label className="field">
           <span>{t('dateLabel')}</span>
-          <select value={date} onChange={(e) => { setDate(e.target.value); setSlotId('') }}>
+          <select
+            value={date}
+            onChange={(e) => {
+              setDate(e.target.value)
+              setSlotId('')
+              setSuggestions([])
+            }}
+          >
             {dates.map((d) => (
               <option key={d} value={d}>
                 {formatDateLocale(d, dateLocale)}
@@ -123,7 +167,14 @@ export function PrenotaPage() {
                     value={slot.id}
                     disabled={taken}
                     checked={slotId === slot.id}
-                    onChange={() => setSlotId(slot.id)}
+                    onChange={() => {
+                      setSlotId(slot.id)
+                      if (taken) {
+                        setSuggestions(suggestNearbySlots(date, slot.id, takenKeys, 5))
+                      } else {
+                        setSuggestions([])
+                      }
+                    }}
                   />
                   {slot.label}
                   {taken ? ` ${t('slotFull')}` : ''}
@@ -132,6 +183,24 @@ export function PrenotaPage() {
             })}
           </div>
         </fieldset>
+
+        {suggestions.length > 0 && (
+          <div className="suggest-box">
+            <p className="body">{t('suggestTitle')}</p>
+            <div className="cta-row">
+              {suggestions.map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => pickSuggestion(s)}
+                >
+                  {formatDateLocale(s.date, dateLocale)} · {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <label className="field">
           <span>{t('nameLabel')}</span>
@@ -144,9 +213,10 @@ export function PrenotaPage() {
         </label>
 
         <label className="field">
-          <span>{t('emailLabel')}</span>
+          <span>{t('emailLabel')} *</span>
           <input
             type="email"
+            required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="esempio@email.com"

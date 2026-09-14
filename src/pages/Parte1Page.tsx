@@ -2,56 +2,49 @@ import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
+import { ProgressChecklist } from '../components/ProgressChecklist'
 import { QuestionBlock } from '../components/QuestionBlock'
 import { PSS_QUESTIONS } from '../data/questions'
-import { useDraft, useParticipantCode } from '../hooks/useParticipant'
+import { useDraft } from '../hooks/useParticipant'
 import { submitResponse } from '../lib/api'
 import { useLang } from '../i18n/LangContext'
+import { loadJson } from '../lib/storage'
+import { getAccess } from '../lib/access'
 
 type Draft = { answers: Record<string, number> }
 const INITIAL: Draft = { answers: {} }
 
-function hasAnswer(answers: Record<string, number>, id: string) {
-  const v = answers[id]
-  return v != null && !Number.isNaN(Number(v))
-}
-
 export function Parte1Page() {
   const navigate = useNavigate()
-  const { lang, t } = useLang()
-  const { ensureCode } = useParticipantCode()
+  const { t } = useLang()
   const { draft, setAnswer } = useDraft<Draft>('draft-pss', INITIAL)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
   const missing = useMemo(
-    () => PSS_QUESTIONS.filter((q) => !hasAnswer(draft.answers, q.id)).map((q) => q.id),
+    () => PSS_QUESTIONS.filter((q) => draft.answers[q.id] == null).map((q) => q.id),
     [draft.answers],
   )
   const answered = missing.length === 0
-
-  const progress = Math.round(
-    ((PSS_QUESTIONS.length - missing.length) / PSS_QUESTIONS.length) * 100,
-  )
+  const progress = Math.round(((PSS_QUESTIONS.length - missing.length) / PSS_QUESTIONS.length) * 100)
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (!answered) {
       setError(`${t('errMissingPrefix')}${missing.join(', ')}`)
-      const first = document.querySelector(`[data-qid="${missing[0]}"]`)
-      first?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      document.querySelector(`[data-qid="${missing[0]}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
     setBusy(true)
     setError('')
     try {
+      const code = getAccess()?.participantCode || loadJson<string>('participantCode', '')
       await submitResponse({
-        participantCode: ensureCode(),
+        participantCode: code,
         section: 'pss',
         answers: draft.answers,
-        uiLang: lang,
       })
-      navigate('/parte-2')
+      navigate('/anagrafica')
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errGeneric'))
     } finally {
@@ -60,17 +53,14 @@ export function Parte1Page() {
   }
 
   return (
-    <AppShell
-      title={t('p1Title')}
-      subtitle={t('p1Sub')}
-      progress={Math.max(20, 20 + progress * 0.25)}
-    >
+    <AppShell title={t('p1Title')} subtitle={t('p1Sub')} progress={Math.max(8, progress * 0.3)}>
       <form className="stack" onSubmit={onSubmit}>
+        <ProgressChecklist />
         {PSS_QUESTIONS.map((q) => (
           <div key={q.id} data-qid={q.id}>
             <QuestionBlock
               question={q}
-              value={draft.answers[q.id] != null ? Number(draft.answers[q.id]) : undefined}
+              value={draft.answers[q.id]}
               onChange={(v) => {
                 setAnswer(q.id, v)
                 setError('')
@@ -79,13 +69,14 @@ export function Parte1Page() {
           </div>
         ))}
         {error && <p className="error">{error}</p>}
-        <p className="body muted">
-          {answered
-            ? null
-            : `${t('errMissingPrefix')}${missing.join(', ')}`}
-        </p>
+        {!answered && (
+          <p className="body muted">
+            {t('errMissingPrefix')}
+            {missing.join(', ')}
+          </p>
+        )}
         <button className="btn btn-primary" type="submit" disabled={busy}>
-          {busy ? t('sending') : t('sendToP2')}
+          {busy ? t('sending') : t('continueDemo')}
         </button>
       </form>
     </AppShell>

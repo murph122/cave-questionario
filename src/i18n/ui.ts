@@ -1,38 +1,41 @@
 import type { Lang } from './types'
 
 export const ui = {
-  brand: { it: 'CAVE Questionari', zh: 'CAVE 问卷' },
+  brand: { it: 'CAVE Lab', zh: 'CAVE Lab' },
   navBook: { it: 'Prenota', zh: '预约' },
-  navSurvey: { it: 'Questionario', zh: '问卷' },
+  navSurvey: { it: 'Accedi', zh: '进入问卷' },
+  navQr: { it: 'QR', zh: '二维码' },
   langIt: { it: 'Italiano', zh: 'Italiano' },
   langZh: { it: '中文', zh: '中文' },
   langAria: { it: 'Cambia lingua', zh: '切换语言' },
 
   welcomeTitle: {
-    it: 'Valutazione dello stress e dell’ambiente CAVE',
-    zh: '压力与 CAVE 环境评估问卷',
+    it: 'Stress, emozioni e immersione nel CAVE',
+    zh: 'CAVE 中的压力、情绪与沉浸',
   },
   welcomeSub: {
-    it: 'Questo questionario valuta lo stress generato dall’esperienza nel CAVE e la qualità dell’esperienza immersiva.',
-    zh: '本问卷用于评估 CAVE 体验中产生的压力，以及整体沉浸体验质量。',
+    it: 'Prenota → attendi approvazione → compila con il tuo ID CAVE.',
+    zh: '预约 → 等待管理员批准 → 用专属 ID 填写问卷。',
   },
   welcomeBody: {
-    it: 'Puoi prenotare un appuntamento per l’esperimento oppure compilare le sezioni del questionario (dati anagrafici e scale). Ti verrà assegnato un codice anonimo automatico.',
-    zh: '你可以预约实验时间，或填写问卷各部分（人口学信息与量表）。系统会自动分配匿名参与者代码。',
+    it: 'Devi prima prenotare un orario. Dopo l’approvazione dello sperimentatore potrai entrare con il codice CAVE-XXXX. Entrambe le condizioni (stressante e non stressante) sono obbligatorie.',
+    zh: '必须先预约时段。管理员批准后，用专属代码 CAVE-XXXX 进入。压力与非压力两种条件都必须填写完整，才会写入表格。',
   },
   welcomeConsent: {
-    it: 'Continuando dichiari di aver compreso lo scopo della ricerca e di partecipare volontariamente. I dati saranno usati solo per fini di ricerca.',
-    zh: '继续即表示你理解本研究目的并自愿参与。数据仅用于研究用途。',
+    it: 'Continuando dichiari di partecipare volontariamente. I dati sono usati solo per fini scientifici.',
+    zh: '继续即表示自愿参与。数据仅用于科研。',
   },
-  ctaBook: { it: 'Prenota l’esperimento', zh: '预约实验' },
-  ctaSurvey: { it: 'Compila il questionario', zh: '填写问卷' },
+  ctaBook: { it: '1. Prenota', zh: '1. 预约' },
+  ctaAccess: { it: '2. Entra con ID', zh: '2. 用 ID 进入' },
+  ctaSurvey: { it: 'Questionario', zh: '问卷' },
+  ctaQr: { it: 'QR per prenotare', zh: '扫码预约' },
 
   bookTitle: { it: 'Prenota l’esperimento', zh: '预约实验' },
   bookSub: {
-    it: 'Giorni lavorativi dal 28 settembre al 9 ottobre 2026. Una persona per fascia oraria.',
-    zh: '开放工作日：2026年9月28日–10月9日。每个时段限 1 人。',
+    it: 'Giorni lavorativi 28 set – 9 ott 2026. Una persona per fascia. Conserva il codice CAVE.',
+    zh: '工作日 2026-09-28–10-09。每时段 1 人。请保存 CAVE 代码。',
   },
-  codeLabel: { it: 'Il tuo codice partecipante', zh: '你的参与者代码' },
+  codeLabel: { it: 'Il tuo codice partecipante', zh: '你的专属代码' },
   dateLabel: { it: 'Data', zh: '日期' },
   slotLabel: { it: 'Fascia oraria', zh: '时段' },
   slotFull: { it: '(pieno)', zh: '（已满）' },
@@ -43,51 +46,136 @@ export const ui = {
   noteLabel: { it: 'Note (opzionale)', zh: '备注（可选）' },
   bookSubmit: { it: 'Conferma prenotazione', zh: '确认预约' },
   sending: { it: 'Invio…', zh: '提交中…' },
+  suggestTitle: {
+    it: 'Orari vicini disponibili — tocca per selezionare:',
+    zh: '临近可用时段 — 点击选用：',
+  },
   errPickSlot: {
     it: 'Seleziona data e fascia oraria.',
     zh: '请选择日期和时段。',
   },
   errContact: {
     it: 'Inserisci almeno un contatto: email o telefono.',
-    zh: '请至少填写邮箱或电话以便联系。',
+    zh: '请至少填写邮箱或电话。',
   },
-  errName: { it: 'Inserisci il tuo nome.', zh: '请填写姓名。' },
+  errName: { it: 'Inserisci nome e cognome.', zh: '请填写姓名。' },
+  errCode: {
+    it: 'Inserisci un codice valido.',
+    zh: '请填写有效代码。',
+  },
   errSlotTaken: {
     it: 'Questa fascia oraria non è più disponibile.',
-    zh: '该时段已满，请另选。',
+    zh: '该时段已满。',
+  },
+  errSlotTakenSuggest: {
+    it: 'Fascia già prenotata. Scegli una delle alternative vicine sotto.',
+    zh: '该时段已被预约。请从下方临近推荐中选择。',
   },
   errGeneric: { it: 'Invio non riuscito.', zh: '提交失败。' },
 
-  demoTitle: { it: 'Dati anagrafici', zh: '人口学信息' },
+  accessTitle: { it: 'Entra nel questionario', zh: '进入问卷' },
+  accessSub: {
+    it: 'Inserisci il codice CAVE ricevuto dopo la prenotazione. Serve l’approvazione dello sperimentatore.',
+    zh: '输入预约后获得的 CAVE 代码。需管理员批准后才能填写。',
+  },
+  accessCodeLabel: { it: 'Codice CAVE', zh: 'CAVE 代码' },
+  accessSubmit: { it: 'Verifica e continua', zh: '验证并继续' },
+  accessNeedBook: {
+    it: 'Non hai ancora prenotato?',
+    zh: '还没有预约？',
+  },
+  accessPending: {
+    it: 'Prenotazione trovata, in attesa di approvazione. Contatta lo sperimentatore o riprova più tardi.',
+    zh: '已找到预约，仍在等待管理员批准。请联系实验者或稍后再试。',
+  },
+  accessCancelled: {
+    it: 'Questa prenotazione è stata annullata.',
+    zh: '该预约已取消。',
+  },
+  accessDone: {
+    it: 'Questo codice ha già completato l’esperimento.',
+    zh: '该代码已完成实验。',
+  },
+  errAccessCode: {
+    it: 'Inserisci un codice CAVE valido (es. CAVE-AB12).',
+    zh: '请输入有效的 CAVE 代码（如 CAVE-AB12）。',
+  },
+  errAccessNotFound: {
+    it: 'Codice non trovato. Controlla o prenota prima.',
+    zh: '未找到该代码。请核对，或先完成预约。',
+  },
+
+  adminTitle: { it: 'Admin — Approvazioni', zh: '管理 — 审批' },
+  adminSub: { it: 'Accesso riservato allo sperimentatore.', zh: '仅实验管理者可访问。' },
+  adminListSub: {
+    it: 'Approva i partecipanti per sbloccare il questionario.',
+    zh: '批准后测试者才能填写问卷。',
+  },
+  adminPass: { it: 'Password admin', zh: '管理员密码' },
+  adminLogin: { it: 'Accedi', zh: '登录' },
+  adminBadPass: { it: 'Password non corretta.', zh: '密码错误。' },
+  adminRefresh: { it: 'Aggiorna elenco', zh: '刷新列表' },
+  adminEmpty: { it: 'Nessuna prenotazione.', zh: '暂无预约。' },
+  adminApprove: { it: 'Approva', zh: '批准' },
+  adminRevoke: { it: 'Revoca', zh: '撤销批准' },
+  adminCancel: { it: 'Annulla', zh: '取消预约' },
+
+  qrTitle: { it: 'QR prenotazione', zh: '预约二维码' },
+  qrSub: {
+    it: 'Inserisci l’URL pubblico del sito (Vercel), poi scarica il QR.',
+    zh: '填写网站的公网地址（Vercel），再生成/下载二维码。',
+  },
+  qrUrlLabel: { it: 'URL pubblico del sito', zh: '网站公网地址' },
+  qrLocalWarn: {
+    it: 'Attenzione: localhost / IP locale NON funziona sul telefono. Incolla l’URL Vercel (https://….vercel.app).',
+    zh: '注意：localhost / 局域网地址手机打不开。请粘贴 Vercel 公网地址（https://….vercel.app）。',
+  },
+  qrNeedPublic: {
+    it: 'Incolla qui l’URL pubblico da Vercel → Domains / Visit (es. https://nome.vercel.app).',
+    zh: '请在此粘贴 Vercel → Domains / Visit 里的公网地址（如 https://名字.vercel.app）。',
+  },
+  qrWaiting: {
+    it: 'Il QR appare solo con un URL https pubblico valido.',
+    zh: '只有填写有效的 https 公网地址后才会生成二维码。',
+  },
+  qrHint: {
+    it: 'Apri il sito su Vercel (non localhost), vai su /qr, controlla che sotto al QR ci sia https://….vercel.app/prenota, poi scarica.',
+    zh: '请用手机浏览器能打开的 Vercel 网站进入 /qr，确认二维码下方是 https://….vercel.app/prenota，再下载/扫码。',
+  },
+  qrDownload: { it: 'Scarica PNG', zh: '下载 PNG' },
+
+  adminEmptyHint: {
+    it: 'Se l’elenco è vuoto: 1) ridistribuisci apps-script/Code.gs 2) verifica SHEETS_WEBHOOK_URL e ADMIN_PASSWORD su Vercel 3) riprova una prenotazione.',
+    zh: '若列表为空：1）重新部署 apps-script/Code.gs 2）检查 Vercel 上的 SHEETS_WEBHOOK_URL 与 ADMIN_PASSWORD 3）再试一次预约。',
+  },
+  adminLoadFail: {
+    it: 'Impossibile caricare le prenotazioni. Ridistribuisci lo script Apps Script.',
+    zh: '无法加载预约列表。请重新部署 Apps Script。',
+  },
+  errEmailRequired: {
+    it: 'Inserisci un’email valida: ci invieremo conferma con codice, data e luogo.',
+    zh: '请填写有效邮箱：系统会发送含代码、时间与地点的确认邮件。',
+  },
+  thanksBookEmail: {
+    it: 'Ti abbiamo inviato un’email di conferma (controlla anche lo spam).',
+    zh: '确认邮件已发送（请同时查看垃圾箱）。',
+  },
+
+  demoTitle: { it: 'Prima dell’esperienza — Dati', zh: '体验前 — 基本信息' },
   demoSub: {
-    it: 'Compila queste informazioni prima della Parte 1 del questionario.',
-    zh: '请在第一部分问卷之前填写以下信息。',
+    it: 'Compila questi dati prima dell’esperienza nel CAVE.',
+    zh: '请在进入 CAVE 体验前填写。',
   },
-  codePartecipante: { it: 'Codice partecipante', zh: '参与者代码' },
-  ageLabel: { it: 'Età in anni', zh: '年龄（岁）' },
-  sexLabel: { it: 'Sesso assegnato alla nascita', zh: '出生时指定的性别' },
-  sexDonna: { it: 'Donna', zh: '女' },
-  sexUomo: { it: 'Uomo', zh: '男' },
-  sexIntersex: {
-    it: 'Intersex / un’altra variazione',
-    zh: '双性 / 其他',
-  },
-  sexPreferNot: {
-    it: 'Preferisco non rispondere',
-    zh: '不愿回答',
-  },
+  bookingIdLabel: { it: 'Codice prenotazione (CAVE)', zh: '预约代码（CAVE）' },
   errAge: {
-    it: 'Inserisci un’età valida (18–100).',
-    zh: '请输入有效年龄（18–100）。',
-  },
-  errSex: {
-    it: 'Seleziona il sesso assegnato alla nascita.',
-    zh: '请选择出生时指定的性别。',
+    it: 'Inserisci un’età valida (16–100).',
+    zh: '请输入有效年龄（16–100）。',
   },
   saving: { it: 'Salvataggio…', zh: '保存中…' },
-  continueP1: { it: 'Continua alla Parte 1', zh: '继续到第一部分' },
+  continueDemo: { it: 'Continua ai dati anagrafici', zh: '继续填写基本信息' },
+  continueSession: { it: 'Continua alle scale di sessione', zh: '继续填写会话量表' },
 
-  p1Title: { it: 'Parte 1 — PSS-10', zh: '第一部分 — PSS-10' },
+  p1Title: { it: 'Baseline — PSS-10', zh: '基线 — PSS-10' },
   p1Sub: {
     it: 'Pensieri e sentimenti nell’ultimo mese (giorno prima dell’esperimento).',
     zh: '过去一个月的想法与感受（实验前一天）。',
@@ -100,16 +188,30 @@ export const ui = {
     it: 'Domande ancora senza risposta: ',
     zh: '还有未作答的题目：',
   },
-  sendToP2: { it: 'Invia e vai alla Parte 2', zh: '提交并进入第二部分' },
+  errPartsIncomplete: {
+    it: 'Parti ancora incomplete: ',
+    zh: '仍有未完成部分：',
+  },
 
-  p2Title: {
-    it: 'Parte 2 — Dopo ogni condizione',
-    zh: '第二部分 — 每种条件之后',
-  },
+  p2Title: { it: 'Dopo ogni ambiente', zh: '每种环境之后' },
   p2Sub: {
-    it: 'Compila queste scale dopo ciascuna condizione (stressante o non stressante).',
-    zh: '请在每种条件（压力 / 非压力）结束后填写这些量表。',
+    it: 'Compila ENTRAMBE le condizioni (stressante e non stressante).',
+    zh: '必须填写两种条件（压力 + 非压力）。',
   },
+  bothConditionsHint: {
+    it: 'Stato condizioni:',
+    zh: '条件进度：',
+  },
+  alreadySaved: { it: 'già salvata', zh: '已保存' },
+  needStress: {
+    it: 'Condizione salvata. Ora compila la condizione stressante.',
+    zh: '已保存。请继续填写压力条件。',
+  },
+  needNonStress: {
+    it: 'Condizione salvata. Ora compila la condizione non stressante.',
+    zh: '已保存。请继续填写非压力条件。',
+  },
+  saveCondition: { it: 'Salva questa condizione', zh: '保存本条件' },
   conditionLegend: {
     it: 'Condizione appena completata',
     zh: '刚刚完成的条件',
@@ -120,43 +222,57 @@ export const ui = {
     it: 'Seleziona la condizione e rispondi a tutte le domande obbligatorie.',
     zh: '请选择条件并完成所有必填题。',
   },
-  sendToP3: { it: 'Invia e vai alla Parte 3', zh: '提交并进入第三部分' },
+  sendToP3: { it: 'Vai alla fine esperienza', zh: '进入结束量表' },
 
-  p3Title: {
-    it: 'Parte 3 — Fine dell’esperimento',
-    zh: '第三部分 — 实验结束',
-  },
+  p3Title: { it: 'Fine esperienza — SSQ & SUS', zh: '体验结束 — SSQ 与 SUS' },
   p3Sub: {
-    it: 'SSQ (Simulator Sickness) e SUS (System Usability Scale).',
-    zh: 'SSQ（模拟器晕动）与 SUS（系统可用性）。',
+    it: 'Compila SSQ e SUS. Solo a questo punto i dati vanno sul Google Sheet.',
+    zh: '填写 SSQ 与 SUS。全部完成后才会写入 Google 表格。',
   },
   p3Note: {
-    it: 'Le voci complete saranno aggiunte a breve. Puoi chiudere questa sezione e salvare lo stato attuale.',
-    zh: '完整题目即将补充。你可以先结束本部分并保存当前状态。',
+    it: 'Servono PSS, anagrafica, entrambe le condizioni, SSQ e SUS.',
+    zh: '需完成 PSS、基本信息、两种条件、SSQ 与 SUS。',
   },
-  finishSurvey: { it: 'Concludi il questionario', zh: '完成问卷' },
+  ssqAltro: { it: 'Altro (descrivi)', zh: '其他（请描述）' },
+  ssqAltroPh: { it: 'Eventuali altri sintomi…', zh: '其他症状…' },
+  finishSurvey: { it: 'Invia e completa l’esperimento', zh: '提交并完成实验' },
+
+  completeTitle: { it: 'Esperimento completato', zh: '实验完成' },
+  completeBody: {
+    it: 'Grazie. Tutte le sezioni sono state salvate sul foglio di calcolo.',
+    zh: '谢谢。所有部分已完整写入表格。',
+  },
+  completeOk: { it: 'Chiudi', zh: '关闭' },
 
   thanksTitle: { it: 'Grazie', zh: '谢谢' },
   thanksBookSub: {
-    it: 'La prenotazione è stata registrata.',
-    zh: '预约已登记。',
+    it: 'Prenotazione inviata — in attesa di approvazione.',
+    zh: '预约已提交 — 等待管理员批准。',
+  },
+  thanksBookWait: {
+    it: 'Conserva il codice. Quando lo sperimentatore approva, usa “Entra con ID”.',
+    zh: '请保存代码。管理员批准后，点「用 ID 进入」填写问卷。',
   },
   thanksSurveySub: {
-    it: 'Le tue risposte sono state registrate.',
-    zh: '你的回答已保存。',
+    it: 'Esperimento completato.',
+    zh: '实验已完成。',
   },
-  thanksCode: { it: 'Codice partecipante:', zh: '参与者代码：' },
+  thanksCode: { it: 'Codice:', zh: '代码：' },
   thanksAppt: { it: 'Appuntamento:', zh: '预约时间：' },
   thanksKeep: {
-    it: 'Conserva il codice: servirà per collegare prenotazione e questionario.',
-    zh: '请保存该代码：用于关联预约与问卷。',
+    it: 'Puoi chiudere questa pagina.',
+    zh: '可以关闭本页。',
   },
   backHome: { it: 'Torna all’inizio', zh: '返回首页' },
   anotherCondition: {
-    it: 'Compila un’altra condizione',
-    zh: '再填另一种条件',
+    it: 'Compila l’altra condizione',
+    zh: '填写另一种条件',
   },
 
+  syncGoogleHint: {
+    it: 'I dati restano sul dispositivo finché non completi tutte le parti.',
+    zh: '全部部分完成前，数据只保存在本机。',
+  },
   placeholderIt: {
     it: 'Questa sezione / queste domande sono ancora in corso di integrazione.',
     zh: '本部分 / 这些题目仍在补充中。',

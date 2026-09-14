@@ -2,12 +2,14 @@ import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
-import { PlaceholderNotice } from '../components/PlaceholderNotice'
+import { ProgressChecklist } from '../components/ProgressChecklist'
 import { QuestionBlock } from '../components/QuestionBlock'
 import { SESSION_GROUPS } from '../data/questions'
-import { useDraft, useParticipantCode } from '../hooks/useParticipant'
+import { useDraft } from '../hooks/useParticipant'
 import { submitResponse } from '../lib/api'
 import { useLang } from '../i18n/LangContext'
+import { getAccess } from '../lib/access'
+import { getAccumulated } from '../lib/accumulate'
 
 type Draft = {
   condition: 'stressante' | 'non_stressante' | ''
@@ -16,38 +18,37 @@ type Draft = {
 
 const INITIAL: Draft = { condition: '', answers: {} }
 
-const REQUIRED_IDS = SESSION_GROUPS.flatMap((g) =>
-  g.questions.filter((q) => !q.placeholder).map((q) => q.id),
-)
-
-function hasAnswer(answers: Record<string, number>, id: string) {
-  const v = answers[id]
-  return v != null && !Number.isNaN(Number(v))
-}
+const REQUIRED_IDS = SESSION_GROUPS.flatMap((g) => g.questions.map((q) => q.id))
 
 export function Parte2Page() {
   const navigate = useNavigate()
   const { lang, t, tx } = useLang()
-  const { ensureCode } = useParticipantCode()
-  const { draft, update, setAnswer } = useDraft<Draft>('draft-session', INITIAL)
+  const { draft, update, setAnswer, setDraft } = useDraft<Draft>('draft-session', INITIAL)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [info, setInfo] = useState('')
 
-  const missing = useMemo(() => {
-    const ids = REQUIRED_IDS.filter((id) => !hasAnswer(draft.answers, id))
-    return ids
-  }, [draft.answers])
+  const acc = getAccumulated()
+  const doneStress = Boolean(acc.sessions?.stressante?.answers)
+  const doneNon = Boolean(acc.sessions?.non_stressante?.answers)
 
+  const missing = useMemo(
+    () => REQUIRED_IDS.filter((id) => draft.answers[id] == null),
+    [draft.answers],
+  )
   const answered = Boolean(draft.condition) && missing.length === 0
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!draft.condition || missing.length > 0) {
-      const parts = [
-        !draft.condition ? t('conditionLegend') : null,
-        missing.length ? `${t('errMissingPrefix')}${missing.join(', ')}` : null,
-      ].filter(Boolean)
-      setError(parts.join(' · ') || t('errCondition'))
+    if (!answered || !draft.condition) {
+      setError(
+        [
+          !draft.condition ? t('conditionLegend') : null,
+          missing.length ? `${t('errMissingPrefix')}${missing.join(', ')}` : null,
+        ]
+          .filter(Boolean)
+          .join(' · ') || t('errCondition'),
+      )
       if (missing[0]) {
         document
           .querySelector(`[data-qid="${missing[0]}"]`)
@@ -57,15 +58,25 @@ export function Parte2Page() {
     }
     setBusy(true)
     setError('')
+    setInfo('')
     try {
-      await submitResponse({
-        participantCode: ensureCode(),
+      const code = getAccess()?.participantCode || ''
+      const result = await submitResponse({
+        participantCode: code,
         section: 'session',
         condition: draft.condition,
         answers: draft.answers,
         uiLang: lang,
       })
-      navigate('/parte-3')
+      setDraft(INITIAL)
+      if (result.bothConditionsDone) {
+        navigate('/parte-3')
+      } else {
+        const next =
+          draft.condition === 'stressante' ? t('needNonStress') : t('needStress')
+        setInfo(next)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errGeneric'))
     } finally {
@@ -76,26 +87,36 @@ export function Parte2Page() {
   return (
     <AppShell title={t('p2Title')} subtitle={t('p2Sub')} progress={55}>
       <form className="stack" onSubmit={onSubmit}>
+        <ProgressChecklist />
+        <p className="body muted">
+          {t('bothConditionsHint')}{' '}
+          {doneStress ? '✓ stress' : '○ stress'} · {doneNon ? '✓ non-stress' : '○ non-stress'}
+        </p>
+
         <fieldset className="field">
           <legend>{t('conditionLegend')}</legend>
           <div className="choice-list">
             {(
               [
-                ['stressante', 'condStress'],
-                ['non_stressante', 'condNonStress'],
+                ['stressante', 'condStress', doneStress],
+                ['non_stressante', 'condNonStress', doneNon],
               ] as const
-            ).map(([value, key]) => (
+            ).map(([value, key, done]) => (
               <label key={value} className="choice">
                 <input
                   type="radio"
                   name="condition"
                   checked={draft.condition === value}
                   onChange={() => {
-                    update({ condition: value })
+                    update({ condition: value, answers: {} })
                     setError('')
+                    setInfo('')
                   }}
                 />
-                {t(key)}
+                <span>
+                  {t(key)}
+                  {done ? ` (${t('alreadySaved')})` : ''}
+                </span>
               </label>
             ))}
           </div>
@@ -104,12 +125,11 @@ export function Parte2Page() {
         {SESSION_GROUPS.map((group) => (
           <section key={group.id} className="group">
             <h2 className="section-title">{tx(group.title)}</h2>
-            {group.description && <PlaceholderNotice />}
             {group.questions.map((q) => (
               <div key={q.id} data-qid={q.id}>
                 <QuestionBlock
                   question={q}
-                  value={draft.answers[q.id] != null ? Number(draft.answers[q.id]) : undefined}
+                  value={draft.answers[q.id]}
                   onChange={(v) => {
                     setAnswer(q.id, v)
                     setError('')
@@ -120,15 +140,11 @@ export function Parte2Page() {
           </section>
         ))}
 
+        {info && <p className="body" style={{ color: '#86efac' }}>{info}</p>}
         {error && <p className="error">{error}</p>}
-        {!answered && missing.length > 0 && (
-          <p className="body muted">
-            {t('errMissingPrefix')}
-            {missing.join(', ')}
-          </p>
-        )}
+        <p className="body muted">{t('syncGoogleHint')}</p>
         <button className="btn btn-primary" type="submit" disabled={busy}>
-          {busy ? t('sending') : t('sendToP3')}
+          {busy ? t('sending') : t('saveCondition')}
         </button>
       </form>
     </AppShell>

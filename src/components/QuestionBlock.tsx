@@ -2,6 +2,7 @@ import type { LikertQuestion } from '../data/questions'
 import { useLang } from '../i18n/LangContext'
 import { LikertScale } from './LikertScale'
 import { PlaceholderNotice } from './PlaceholderNotice'
+import { SamScale } from './SamScale'
 import './QuestionBlock.css'
 
 type Props = {
@@ -17,13 +18,25 @@ export function QuestionBlock({ question, value, onChange }: Props) {
       <h3 className="q-id">{question.id}</h3>
       <p className="q-text">{tx(question.text)}</p>
       {question.placeholder && <PlaceholderNotice compact />}
-      <LikertScale
-        name={question.id}
-        low={tx(question.low)}
-        high={tx(question.high)}
-        value={value}
-        onChange={onChange}
-      />
+      {question.sam ? (
+        <SamScale
+          name={question.id}
+          kind={question.sam}
+          low={tx(question.low)}
+          high={tx(question.high)}
+          value={value}
+          onChange={onChange}
+        />
+      ) : (
+        <LikertScale
+          name={question.id}
+          low={tx(question.low)}
+          high={tx(question.high)}
+          value={value}
+          max={question.max ?? 5}
+          onChange={onChange}
+        />
+      )}
     </article>
   )
 }

@@ -50,12 +50,33 @@ SHEETS_WEBHOOK_URL=https://script.google.com/macros/s/XXXX/exec
 
 Senza webhook, le API rispondono comunque in modalità `demo` (memoria volatile sull’istanza serverless).
 
-## Note v0.1
+## Dove vedere i dati (Google Sheet diretto)
 
-- Codice anonimo automatico: `CAVE-XXXX`  
-- DEM1, IPQ7+, SSQ, SUS: placeholder bilingue  
-- Capacità slot: 1 persona  
-- Contatto obbligatorio: email **o** telefono  
+**Importante:** il sito scrive **direttamente** su questo Google Sheet (non più tramite formResponse):
+
+https://docs.google.com/spreadsheets/d/1lULR-CpicCsOZQT7BqidPj6tO10IqpnHde_MMaFF1oQ/edit
+
+### Setup una tantum (obbligatorio)
+
+1. Apri lo Sheet sopra → **Estensioni → Apps Script**
+2. Incolla il contenuto di `apps-script/Code.gs` → Salva
+3. **Deploy → Nuova distribuzione → App Web**
+   - Esegui come: Me
+   - Chi può accedere: Anyone
+4. Copia l’URL `/macros/s/.../exec`
+5. Crea `.env` nella root del progetto:
+
+```bash
+cp .env.example .env
+# poi metti:
+SHEETS_WEBHOOK_URL=https://script.google.com/macros/s/XXXX/exec
+```
+
+6. Riavvia `npm run dev`
+
+Su Vercel: Project → Settings → Environment Variables → stessa `SHEETS_WEBHOOK_URL`.
+
+**Flusso dati:** anagrafica + PSS in locale → a fine **Parte 2** viene aggiunta **una riga** allo Sheet. 
 
 ## Script
 

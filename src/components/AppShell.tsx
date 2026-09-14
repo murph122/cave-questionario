@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useLang } from '../i18n/LangContext'
 import type { Lang } from '../i18n/types'
+import { TechFx } from './TechFx'
 import './AppShell.css'
 
 const THEME_BY_PATH: Record<string, string> = {
@@ -48,6 +49,7 @@ export function AppShell({ children, title, subtitle, progress }: Props) {
   return (
     <div className={`shell ${theme}`}>
       <div className="shell-bg" aria-hidden />
+      <TechFx />
 
       <div className="lang-float">
         <span className="lang-float-label">Lingua / 语言</span>
@@ -61,7 +63,8 @@ export function AppShell({ children, title, subtitle, progress }: Props) {
           </Link>
           <nav className="shell-nav">
             <Link to="/prenota">{t('navBook')}</Link>
-            <Link to="/anagrafica">{t('navSurvey')}</Link>
+            <Link to="/accedi">{t('navSurvey')}</Link>
+            <Link to="/qr">{t('navQr')}</Link>
           </nav>
         </header>
       </div>

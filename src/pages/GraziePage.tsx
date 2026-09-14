@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { formatDateLocale } from '../data/slots'
 import { useLang } from '../i18n/LangContext'
+import { clearSurveySession } from '../lib/storage'
 
 type ThanksState = {
   kind?: 'booking' | 'questionnaire'
@@ -35,14 +36,16 @@ export function GraziePage() {
             {state.slotLabel ? ` · ${state.slotLabel}` : ''}
           </p>
         )}
-        <p className="body muted">{t('thanksKeep')}</p>
+        {isBooking && <p className="body muted">{t('thanksBookWait')}</p>}
+        {isBooking && <p className="body muted">{t('thanksBookEmail')}</p>}
+        {!isBooking && <p className="body muted">{t('thanksKeep')}</p>}
         <div className="cta-row">
-          <Link className="btn btn-primary" to="/">
+          <Link className="btn btn-primary" to="/" onClick={() => clearSurveySession()}>
             {t('backHome')}
           </Link>
-          {!isBooking && (
-            <Link className="btn btn-ghost" to="/parte-2">
-              {t('anotherCondition')}
+          {isBooking && (
+            <Link className="btn btn-ghost" to="/accedi">
+              {t('ctaAccess')}
             </Link>
           )}
         </div>

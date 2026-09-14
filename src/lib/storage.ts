@@ -1,5 +1,14 @@
 const PREFIX = 'cave-q:'
 
+const SURVEY_KEYS = [
+  'participantCode',
+  'accumulated',
+  'draft-anagrafica',
+  'draft-pss',
+  'draft-session',
+  'draft-final',
+] as const
+
 export function loadJson<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(PREFIX + key)
@@ -16,6 +25,16 @@ export function saveJson<T>(key: string, value: T): void {
 
 export function removeKey(key: string): void {
   localStorage.removeItem(PREFIX + key)
+}
+
+/** Clear questionnaire drafts/answers so the next participant starts blank. */
+export function clearSurveySession(opts?: { keepAccess?: boolean }): void {
+  for (const key of SURVEY_KEYS) {
+    removeKey(key)
+  }
+  if (!opts?.keepAccess) {
+    removeKey('access')
+  }
 }
 
 export type LocalBooking = {
@@ -42,4 +61,10 @@ export function addLocalBooking(booking: LocalBooking): void {
 
 export function isSlotTakenLocally(date: string, slotId: string): boolean {
   return getLocalBookings().some((b) => b.date === date && b.slotId === slotId)
+}
+
+export function suggestPersonalCode(nome: string, cognome: string): string {
+  const a = nome.replace(/\s+/g, '').slice(0, 3).toUpperCase()
+  const b = cognome.replace(/\s+/g, '').slice(0, 3).toUpperCase()
+  return `${a}${b}`
 }
