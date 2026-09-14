@@ -47,11 +47,11 @@ function doPost(e) {
     if (type === 'booking') {
       ensureBookingsHeader_()
       var sheet = bookingsSheet_()
-      // conflict check
       var key = String(data.date) + '|' + String(data.slotId)
       if (takenKeys_().indexOf(key) !== -1) {
         return json_({ ok: false, error: 'slot_taken' })
       }
+      // Save first — never block the HTTP response on email
       sheet.appendRow([
         new Date(),
         data.bookingId || '',
@@ -64,8 +64,12 @@ function doPost(e) {
         data.note || '',
         'pending',
       ])
+      return json_({ ok: true, status: 'pending', emailSent: false, emailDeferred: true })
+    }
+
+    if (type === 'sendBookingEmail') {
       var mailResult = sendBookingEmail_(data)
-      return json_({ ok: true, status: 'pending', emailSent: mailResult.sent, emailError: mailResult.error || null })
+      return json_({ ok: true, emailSent: mailResult.sent, emailError: mailResult.error || null })
     }
 
     if (type === 'approve') {

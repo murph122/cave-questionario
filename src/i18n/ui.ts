@@ -145,8 +145,8 @@ export const ui = {
   qrDownload: { it: 'Scarica PNG', zh: '下载 PNG' },
 
   adminEmptyHint: {
-    it: 'Se l’elenco è vuoto: 1) ridistribuisci apps-script/Code.gs 2) verifica SHEETS_WEBHOOK_URL e ADMIN_PASSWORD su Vercel 3) riprova una prenotazione.',
-    zh: '若列表为空：1）重新部署 apps-script/Code.gs 2）检查 Vercel 上的 SHEETS_WEBHOOK_URL 与 ADMIN_PASSWORD 3）再试一次预约。',
+    it: 'Elenco vuoto = nessuna riga nel foglio Bookings. 1) Ridistribuisci apps-script/Code.gs 2) Fai una nuova prenotazione su /prenota 3) Aggiorna qui. Se la prenotazione fallisce, controlla SHEETS_WEBHOOK_URL su Vercel.',
+    zh: '列表为空 = Google 表 Bookings 里没有预约。请：1）重新部署 apps-script/Code.gs 2）在 /prenota 再预约一次 3）点刷新。若预约失败，检查 Vercel 的 SHEETS_WEBHOOK_URL。',
   },
   adminLoadFail: {
     it: 'Impossibile caricare le prenotazioni. Ridistribuisci lo script Apps Script.',
