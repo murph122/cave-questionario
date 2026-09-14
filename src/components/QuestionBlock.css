@@ -1,0 +1,24 @@
+.q-block {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.q-block:last-of-type {
+  border-bottom: none;
+}
+
+.q-id {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.q-text {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.45;
+  font-weight: 500;
+}

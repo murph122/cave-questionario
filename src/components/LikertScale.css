@@ -1,0 +1,51 @@
+.likert {
+  margin-top: 0.85rem;
+}
+
+.likert-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.55rem;
+}
+
+.likert-options {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.45rem;
+}
+
+.likert-opt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: inherit;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  user-select: none;
+}
+
+.likert-opt:hover {
+  border-color: var(--accent);
+}
+
+.likert-opt.selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, white);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 480px) {
+  .likert-opt {
+    min-height: 2.75rem;
+  }
+}
