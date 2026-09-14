@@ -159,8 +159,18 @@ export function sheetsWebhookApi(mode: string, cwd: string): Plugin {
                 if (!webhook) return send(res, 503, { error: 'SHEETS_WEBHOOK_URL missing' })
                 const code = String(body.participantCode || '').toUpperCase().trim()
                 const status = body.status || 'approved'
-                await postSheets(webhook, { type: 'approve', participantCode: code, status })
+                await postSheets(webhook, {
+                  type: 'approve',
+                  participantCode: code,
+                  status,
+                  ...(body as object),
+                })
                 return send(res, 200, { ok: true, status })
+              }
+              if (body.action === 'ping') {
+                if (!webhook) return send(res, 503, { error: 'SHEETS_WEBHOOK_URL missing' })
+                const data = await postSheets(webhook, { type: 'ping' })
+                return send(res, 200, { ok: true, ...data })
               }
               return send(res, 400, { error: 'Unknown action' })
             }

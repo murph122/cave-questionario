@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { AppShell } from '../components/AppShell'
-import { adminListBookings, adminLogin, adminSetStatus } from '../lib/api'
+import { adminListBookings, adminLogin, adminPing, adminSetStatus } from '../lib/api'
 import { useLang } from '../i18n/LangContext'
 import { formatDateLocale, TIME_SLOTS } from '../data/slots'
 import './AdminPage.css'
@@ -24,12 +24,27 @@ export function AdminPage() {
   const [authed, setAuthed] = useState(Boolean(sessionStorage.getItem(SESSION_KEY)))
   const [rows, setRows] = useState<Row[]>([])
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
+  const [manualCode, setManualCode] = useState('')
+  const [health, setHealth] = useState('')
   const dateLocale = lang === 'zh' ? 'zh-CN' : 'it-IT'
 
   async function refresh(pass: string) {
     const list = await adminListBookings(pass)
     setRows(list as Row[])
+    try {
+      const ping = await adminPing(pass)
+      setHealth(
+        ping.sheet
+          ? `${t('adminHealthOk')} · ${ping.sheet} · ${ping.bookings ?? list.length} bookings`
+          : t('adminHealthOk'),
+      )
+    } catch (err) {
+      setHealth(
+        `${t('adminHealthFail')}: ${err instanceof Error ? err.message : 'error'}`,
+      )
+    }
   }
 
   useEffect(() => {
@@ -62,14 +77,27 @@ export function AdminPage() {
   async function setStatus(code: string, status: 'approved' | 'pending' | 'cancelled') {
     setBusy(true)
     setError('')
+    setInfo('')
     try {
       await adminSetStatus(password, code, status)
+      setInfo(`${code} → ${status}`)
       await refresh(password)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errGeneric'))
     } finally {
       setBusy(false)
     }
+  }
+
+  async function approveManual(e: FormEvent) {
+    e.preventDefault()
+    const code = manualCode.trim().toUpperCase()
+    if (code.length < 6) {
+      setError(t('errAccessCode'))
+      return
+    }
+    await setStatus(code, 'approved')
+    setManualCode('')
   }
 
   if (!authed) {
@@ -98,7 +126,26 @@ export function AdminPage() {
   return (
     <AppShell title={t('adminTitle')} subtitle={t('adminListSub')}>
       <div className="stack">
+        {health && <p className="body muted">{health}</p>}
         {error && <p className="error">{error}</p>}
+        {info && <p className="body" style={{ color: '#86efac' }}>{info}</p>}
+
+        <form className="stack form" onSubmit={approveManual}>
+          <label className="field">
+            <span>{t('adminManualLabel')}</span>
+            <input
+              value={manualCode}
+              onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+              placeholder="CAVE-XXXX"
+              autoComplete="off"
+            />
+          </label>
+          <button className="btn btn-primary" type="submit" disabled={busy}>
+            {t('adminManualApprove')}
+          </button>
+          <p className="body muted">{t('adminManualHint')}</p>
+        </form>
+
         <button
           className="btn btn-ghost"
           type="button"

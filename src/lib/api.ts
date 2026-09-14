@@ -237,11 +237,32 @@ export async function adminSetStatus(
   password: string,
   participantCode: string,
   status: 'approved' | 'pending' | 'cancelled' | 'done',
+  extra?: { date?: string; slotId?: string; contactName?: string; email?: string },
 ) {
   return postJsonWithTimeout(
     '/api/admin',
-    { action: 'setStatus', participantCode, status, password },
-    10000,
+    {
+      action: 'setStatus',
+      participantCode,
+      status,
+      password,
+      ...extra,
+    },
+    15000,
+    { 'X-Admin-Password': password },
+  )
+}
+
+export async function adminPing(password: string) {
+  return postJsonWithTimeout<{
+    ok?: boolean
+    sheet?: string
+    bookings?: number
+    error?: string
+  }>(
+    '/api/admin',
+    { action: 'ping', password },
+    15000,
     { 'X-Admin-Password': password },
   )
 }

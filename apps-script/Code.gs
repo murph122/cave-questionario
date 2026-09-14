@@ -11,12 +11,19 @@
 
 var BOOKINGS_SHEET = 'Bookings'
 var RESPONSES_SHEET = 'Form_Responses'
+/** Bound or not — always open this spreadsheet by ID */
+var SPREADSHEET_ID = '1lULR-CpicCsOZQT7BqidPj6tO10IqpnHde_MMaFF1oQ'
 
 function doGet(e) {
   try {
     var action = (e && e.parameter && e.parameter.action) || 'ping'
     if (action === 'ping') {
-      return json_({ ok: true, service: 'cave-questionario-sheets' })
+      return json_({
+        ok: true,
+        service: 'cave-questionario-sheets',
+        sheet: ss_().getName(),
+        bookings: listBookings_().length,
+      })
     }
     if (action === 'listBookings') {
       return json_({ ok: true, taken: takenKeys_(), bookings: listBookings_() })
@@ -75,9 +82,34 @@ function doPost(e) {
     if (type === 'approve') {
       var codeA = String(data.participantCode || '').toUpperCase().trim()
       var status = data.status || 'approved'
+      if (!codeA) return json_({ ok: false, error: 'missing_code' })
       var updated = setBookingStatus_(codeA, status)
-      if (!updated) return json_({ ok: false, error: 'not_found' })
-      return json_({ ok: true, status: status })
+      if (!updated) {
+        // Manual approve: create the row if booking was never saved
+        ensureBookingsHeader_()
+        bookingsSheet_().appendRow([
+          new Date(),
+          data.bookingId || Utilities.getUuid(),
+          codeA,
+          data.date || '',
+          data.slotId || '',
+          data.contactName || 'manual',
+          data.email || '',
+          data.phone || '',
+          data.note || 'approved-from-admin',
+          status,
+        ])
+      }
+      return json_({ ok: true, status: status, created: !updated })
+    }
+
+    if (type === 'ping') {
+      return json_({
+        ok: true,
+        service: 'cave-questionario-sheets',
+        sheet: ss_().getName(),
+        bookings: listBookings_().length,
+      })
     }
 
     if (type === 'google_sheet' || type === 'survey') {
@@ -106,7 +138,7 @@ function json_(obj) {
 }
 
 function ss_() {
-  return SpreadsheetApp.getActiveSpreadsheet()
+  return SpreadsheetApp.openById(SPREADSHEET_ID)
 }
 
 function bookingsSheet_() {

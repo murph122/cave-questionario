@@ -119,6 +119,20 @@ export const ui = {
   adminApprove: { it: 'Approva', zh: '批准' },
   adminRevoke: { it: 'Revoca', zh: '撤销批准' },
   adminCancel: { it: 'Annulla', zh: '取消预约' },
+  adminManualLabel: {
+    it: 'Approva con codice (anche se non compare in elenco)',
+    zh: '用代码批准（列表没有也能批）',
+  },
+  adminManualApprove: { it: 'Approva questo codice', zh: '批准此代码' },
+  adminManualHint: {
+    it: 'Chiedi al partecipante il codice CAVE-XXXX mostrato dopo la prenotazione, incollalo e approva.',
+    zh: '让测试者告诉你预约后显示的 CAVE-XXXX，粘贴后点批准即可进入问卷。',
+  },
+  adminHealthOk: { it: 'Webhook Sheets OK', zh: '表格连接正常' },
+  adminHealthFail: {
+    it: 'Webhook Sheets non risponde — ridistribuisci Code.gs e aggiorna SHEETS_WEBHOOK_URL',
+    zh: '表格 Webhook 无响应 — 请重新部署 Code.gs 并更新 SHEETS_WEBHOOK_URL',
+  },
 
   qrTitle: { it: 'QR prenotazione', zh: '预约二维码' },
   qrSub: {

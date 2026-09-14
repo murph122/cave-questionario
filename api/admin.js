@@ -60,8 +60,18 @@ export default async function handler(req, res) {
           type: 'approve',
           participantCode: code,
           status,
+          date: body.date || '',
+          slotId: body.slotId || '',
+          contactName: body.contactName || '',
+          email: body.email || '',
+          note: body.note || 'approved-from-admin',
         })
         return json(res, 200, { ok: true, status })
+      }
+
+      if (body.action === 'ping') {
+        const data = await postSheets(webhook, { type: 'ping' })
+        return json(res, 200, { ok: true, ...data })
       }
 
       return json(res, 400, { error: 'Unknown action' })
