@@ -7,7 +7,6 @@ import { useParticipantCode } from '../hooks/useParticipant'
 import { formatDateLocale, listAvailableDates, TIME_SLOTS } from '../data/slots'
 import { suggestNearbySlots } from '../lib/nearbySlots'
 import { addLocalBooking, isSlotTakenLocally, saveJson } from '../lib/storage'
-import { setAccess } from '../lib/access'
 import { useLang } from '../i18n/LangContext'
 
 export function PrenotaPage() {
@@ -94,13 +93,6 @@ export function PrenotaPage() {
       await createBooking(booking)
       addLocalBooking(booking)
       saveJson('participantCode', participantCode)
-      setAccess({
-        participantCode,
-        status: 'pending',
-        date,
-        slotId,
-        contactName: booking.contactName,
-      })
       navigate('/grazie', {
         state: {
           kind: 'booking',

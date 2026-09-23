@@ -8,10 +8,8 @@ import './AppShell.css'
 const THEME_BY_PATH: Record<string, string> = {
   '/': 'theme-home',
   '/prenota': 'theme-book',
-  '/anagrafica': 'theme-demo',
-  '/parte-1': 'theme-p1',
-  '/parte-2': 'theme-p2',
-  '/parte-3': 'theme-p3',
+  '/qr': 'theme-book',
+  '/admin': 'theme-home',
   '/grazie': 'theme-thanks',
 }
 
@@ -63,7 +61,6 @@ export function AppShell({ children, title, subtitle, progress }: Props) {
           </Link>
           <nav className="shell-nav">
             <Link to="/prenota">{t('navBook')}</Link>
-            <Link to="/accedi">{t('navSurvey')}</Link>
             <Link to="/qr">{t('navQr')}</Link>
           </nav>
         </header>

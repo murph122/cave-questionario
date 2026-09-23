@@ -16,11 +16,6 @@ export function WelcomePage() {
           <Link className="btn btn-primary" to="/prenota">
             {t('ctaBook')}
           </Link>
-          <Link className="btn btn-ghost" to="/accedi">
-            {t('ctaAccess')}
-          </Link>
-        </div>
-        <div className="cta-row">
           <Link className="btn btn-ghost" to="/qr">
             {t('ctaQr')}
           </Link>

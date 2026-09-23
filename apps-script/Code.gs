@@ -1,18 +1,24 @@
 /**
- * CAVE Questionario → Google Sheets
+ * CAVE Questionario → Google Sheets (two separate files)
  *
- * Sheets:
- *  - Bookings: appointments + approval status
- *  - Form_Responses: one row per completed participant (both conditions)
+ * 1) BOOKINGS spreadsheet — only appointment rows (tab "Bookings")
+ * 2) RESPONSES spreadsheet — questionnaire rows (tab "Form_Responses")
  *
- * Deploy: Extensions → Apps Script → paste → Deploy as Web app (Anyone)
+ * Create a new Google Sheet for bookings, share it with the same Google
+ * account that owns this Apps Script, paste its ID below, then redeploy.
+ *
+ * Deploy: paste this file → Deploy as Web app (Anyone)
  * Then set SHEETS_WEBHOOK_URL in .env / Vercel
  */
 
 var BOOKINGS_SHEET = 'Bookings'
 var RESPONSES_SHEET = 'Form_Responses'
-/** Bound or not — always open this spreadsheet by ID */
-var SPREADSHEET_ID = '1lULR-CpicCsOZQT7BqidPj6tO10IqpnHde_MMaFF1oQ'
+
+/** Questionnaire / form answers — keep your existing sheet */
+var RESPONSES_SPREADSHEET_ID = '1lULR-CpicCsOZQT7BqidPj6tO10IqpnHde_MMaFF1oQ'
+
+/** Bookings only — separate spreadsheet from questionnaire responses */
+var BOOKINGS_SPREADSHEET_ID = '1WJW8_xIeYwHmJ4uANl3e1vIz04ONmAPTCsvBHn0jt0g'
 
 function doGet(e) {
   try {
@@ -21,8 +27,10 @@ function doGet(e) {
       return json_({
         ok: true,
         service: 'cave-questionario-sheets',
-        sheet: ss_().getName(),
+        bookingsSheet: bookingsSs_().getName(),
+        responsesSheet: responsesSs_().getName(),
         bookings: listBookings_().length,
+        bookingsIdSet: !!BOOKINGS_SPREADSHEET_ID,
       })
     }
     if (action === 'listBookings') {
@@ -107,8 +115,10 @@ function doPost(e) {
       return json_({
         ok: true,
         service: 'cave-questionario-sheets',
-        sheet: ss_().getName(),
+        bookingsSheet: bookingsSs_().getName(),
+        responsesSheet: responsesSs_().getName(),
         bookings: listBookings_().length,
+        bookingsIdSet: !!BOOKINGS_SPREADSHEET_ID,
       })
     }
 
@@ -137,19 +147,28 @@ function json_(obj) {
     .setMimeType(ContentService.MimeType.JSON)
 }
 
-function ss_() {
-  return SpreadsheetApp.openById(SPREADSHEET_ID)
+function bookingsSs_() {
+  if (!BOOKINGS_SPREADSHEET_ID) {
+    throw new Error(
+      'BOOKINGS_SPREADSHEET_ID is empty — create a bookings Google Sheet and paste its ID in Code.gs',
+    )
+  }
+  return SpreadsheetApp.openById(BOOKINGS_SPREADSHEET_ID)
+}
+
+function responsesSs_() {
+  return SpreadsheetApp.openById(RESPONSES_SPREADSHEET_ID)
 }
 
 function bookingsSheet_() {
-  var ss = ss_()
+  var ss = bookingsSs_()
   var sheet = ss.getSheetByName(BOOKINGS_SHEET)
   if (!sheet) sheet = ss.insertSheet(BOOKINGS_SHEET)
   return sheet
 }
 
 function responsesSheet_() {
-  var ss = ss_()
+  var ss = responsesSs_()
   var sheet = ss.getSheetByName(RESPONSES_SHEET)
   if (!sheet) sheet = ss.getSheets()[0]
   return sheet

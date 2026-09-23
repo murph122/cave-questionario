@@ -37,7 +37,7 @@ export function AdminPage() {
       const ping = await adminPing(pass)
       setHealth(
         ping.sheet
-          ? `${t('adminHealthOk')} · ${ping.sheet} · ${ping.bookings ?? list.length} bookings`
+          ? `${t('adminHealthOk')} · ${ping.bookingsSheet || ping.sheet || '?'} · ${ping.bookings ?? list.length} bookings`
           : t('adminHealthOk'),
       )
     } catch (err) {
@@ -93,7 +93,7 @@ export function AdminPage() {
     e.preventDefault()
     const code = manualCode.trim().toUpperCase()
     if (code.length < 6) {
-      setError(t('errAccessCode'))
+      setError(t('errCode'))
       return
     }
     await setStatus(code, 'approved')
