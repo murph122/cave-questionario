@@ -106,7 +106,7 @@ function doPost(e) {
         new Date(),
         bid || Utilities.getUuid(),
         codeB,
-        dateB,
+        dateForSheet_(dateB),
         slotB,
         data.contactName || '',
         data.email || '',
@@ -137,7 +137,7 @@ function doPost(e) {
           new Date(),
           data.bookingId || Utilities.getUuid(),
           codeA,
-          normalizeDate_(data.date || ''),
+          dateForSheet_(normalizeDate_(data.date || '')),
           normalizeSlot_(data.slotId || ''),
           data.contactName || 'manual',
           data.email || '',
@@ -147,7 +147,12 @@ function doPost(e) {
         ])
         return json_({ ok: true, status: status, created: true })
       }
-      return json_({ ok: true, status: status, created: false })
+      return json_({
+        ok: true,
+        status: status,
+        created: false,
+        deleted: String(status).toLowerCase() === 'cancelled',
+      })
     }
 
     if (type === 'ping') {
@@ -277,14 +282,27 @@ function listBookings_() {
 
 function takenKeys_() {
   // Only approved (or completed) bookings lock the slot for others.
-  // Pending requests stay bookable until the experimenter confirms.
   return listBookings_()
     .filter(function (b) {
-      return b.status === 'approved' || b.status === 'done'
+      return (
+        (b.status === 'approved' || b.status === 'done') &&
+        b.date &&
+        b.slotId
+      )
     })
     .map(function (b) {
       return b.date + '|' + b.slotId
     })
+}
+
+/** Write YYYY-MM-DD as local noon Date so Sheets keeps the correct calendar day. */
+function dateForSheet_(iso) {
+  var s = normalizeDate_(iso)
+  var parts = s.split('-')
+  if (parts.length === 3) {
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0)
+  }
+  return s
 }
 
 function findBooking_(code) {
@@ -296,8 +314,8 @@ function findBooking_(code) {
 }
 
 /**
- * Update status. Prefer matching code + date + slotId so duplicate name-codes
- * (same person booking twice, or shared codes) update the correct row.
+ * Update status, or delete the row when status is "cancelled".
+ * Prefer matching code + date + slotId so the correct booking is changed.
  */
 function setBookingStatus_(code, status, date, slotId) {
   ensureBookingsHeader_()
@@ -308,12 +326,17 @@ function setBookingStatus_(code, status, date, slotId) {
   var codeU = String(code || '')
     .toUpperCase()
     .trim()
+  var doDelete = String(status || '').toLowerCase() === 'cancelled'
 
   for (var i = values.length - 1; i >= 1; i--) {
     if (String(values[i][2]).toUpperCase().trim() !== codeU) continue
     if (wantDate && normalizeDate_(values[i][3]) !== wantDate) continue
     if (wantSlot && normalizeSlot_(values[i][4]) !== wantSlot) continue
-    sheet.getRange(i + 1, 10).setValue(status)
+    if (doDelete) {
+      sheet.deleteRow(i + 1)
+    } else {
+      sheet.getRange(i + 1, 10).setValue(status)
+    }
     return true
   }
   return false

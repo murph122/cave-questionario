@@ -30,7 +30,28 @@ export function PrenotaPage() {
   const contactName = `${nome.trim()} ${cognome.trim()}`.trim()
 
   useEffect(() => {
-    fetchTakenSlots().then(setRemoteTaken).catch(() => setRemoteTaken([]))
+    let alive = true
+    function load() {
+      fetchTakenSlots()
+        .then((keys) => {
+          if (alive) setRemoteTaken(keys)
+        })
+        .catch(() => {
+          if (alive) setRemoteTaken([])
+        })
+    }
+    load()
+    const onFocus = () => load()
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') load()
+    })
+    const poll = window.setInterval(load, 20000)
+    return () => {
+      alive = false
+      window.removeEventListener('focus', onFocus)
+      window.clearInterval(poll)
+    }
   }, [])
 
   const takenKeys = useMemo(() => new Set(remoteTaken), [remoteTaken])

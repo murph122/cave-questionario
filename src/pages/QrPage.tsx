@@ -4,27 +4,39 @@ import { AppShell } from '../components/AppShell'
 import { useLang } from '../i18n/LangContext'
 import './QrPage.css'
 
+/** Canonical public site — always with https */
+export const PUBLIC_SITE_URL = 'https://cave-questionario.vercel.app'
+
 function isLocalHost(url: string) {
   return /localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.|10\.\d+\.|172\.(1[6-9]|2\d|3[0-1])\./i.test(
     url,
   )
 }
 
+/** Force https:// and strip trailing slash. */
+function normalizePublicUrl(raw: string): string {
+  let s = String(raw || '').trim().replace(/\/$/, '')
+  if (!s) return ''
+  if (!/^https?:\/\//i.test(s)) s = `https://${s}`
+  // Prefer https
+  s = s.replace(/^http:\/\//i, 'https://')
+  return s.replace(/\/$/, '')
+}
+
 function resolvePublicSiteUrl(): string {
   const fromEnv = (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.trim()
-  if (fromEnv && !isLocalHost(fromEnv)) return fromEnv.replace(/\/$/, '')
+  if (fromEnv && !isLocalHost(fromEnv)) return normalizePublicUrl(fromEnv)
 
   if (typeof window !== 'undefined') {
     const origin = window.location.origin.replace(/\/$/, '')
-    // On the real Vercel site, use current origin so QR works without typing
     if (origin && !isLocalHost(origin) && /^https:/i.test(origin)) return origin
   }
-  return ''
+  return PUBLIC_SITE_URL
 }
 
 export function QrPage() {
   const { t } = useLang()
-  const [baseUrl, setBaseUrl] = useState('')
+  const [baseUrl, setBaseUrl] = useState(PUBLIC_SITE_URL)
   const [dataUrl, setDataUrl] = useState('')
   const [genError, setGenError] = useState('')
 
@@ -32,7 +44,8 @@ export function QrPage() {
     setBaseUrl(resolvePublicSiteUrl())
   }, [])
 
-  const cleaned = baseUrl.replace(/\/$/, '')
+  const cleaned = normalizePublicUrl(baseUrl)
+  // QR opens the booking page (not /qr itself)
   const target = cleaned ? `${cleaned}/prenota` : ''
   const warnLocal = Boolean(cleaned && isLocalHost(cleaned))
   const canUse = Boolean(cleaned && !warnLocal)
@@ -71,8 +84,8 @@ export function QrPage() {
           <span>{t('qrUrlLabel')}</span>
           <input
             value={baseUrl}
-            onChange={(e) => setBaseUrl(e.target.value.trim())}
-            placeholder="https://cave-questionario.vercel.app"
+            onChange={(e) => setBaseUrl(normalizePublicUrl(e.target.value) || e.target.value)}
+            placeholder={PUBLIC_SITE_URL}
           />
         </label>
         {!cleaned && <p className="error">{t('qrNeedPublic')}</p>}
@@ -83,7 +96,11 @@ export function QrPage() {
         ) : (
           <p className="body muted">{t('qrWaiting')}</p>
         )}
-        {canUse && <p className="body muted qr-url">{target}</p>}
+        {canUse && (
+          <p className="body muted qr-url">
+            {t('qrEncodes')}: {target}
+          </p>
+        )}
         <p className="body">{t('qrHint')}</p>
         {canUse && dataUrl && (
           <a className="btn btn-primary" href={dataUrl} download="cave-prenota-qr.png">

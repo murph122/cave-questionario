@@ -162,6 +162,10 @@ export function AdminPage() {
     status: 'approved' | 'pending' | 'cancelled',
     extra?: { date?: string; slotId?: string; contactName?: string; email?: string },
   ) {
+    if (status === 'cancelled') {
+      const ok = window.confirm(t('adminCancelConfirm'))
+      if (!ok) return
+    }
     setBusy(true)
     setError('')
     setInfo('')
@@ -172,7 +176,7 @@ export function AdminPage() {
         contactName: extra?.contactName,
         email: extra?.email,
       })
-      setInfo(`${code} → ${status}`)
+      setInfo(status === 'cancelled' ? `${code} — ${t('adminDeleted')}` : `${code} → ${status}`)
       await refresh(password)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errGeneric'))

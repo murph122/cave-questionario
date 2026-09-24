@@ -84,13 +84,28 @@ export async function createBooking(payload: BookPayload) {
 export async function fetchTakenSlots(): Promise<string[]> {
   try {
     const controller = new AbortController()
-    const timer = window.setTimeout(() => controller.abort(), 5000)
+    const timer = window.setTimeout(() => controller.abort(), 20000)
     const res = await fetch('/api/slots', { signal: controller.signal })
     window.clearTimeout(timer)
     const contentType = res.headers.get('content-type') || ''
     if (!res.ok || !contentType.includes('application/json')) return []
-    const data = (await res.json()) as { taken: string[] }
-    return data.taken || []
+    const data = (await res.json()) as {
+      taken?: string[]
+      bookings?: Array<{ date?: string; slotId?: string; status?: string }>
+    }
+    const fromTaken = data.taken || []
+    const fromBookings = (data.bookings || [])
+      .filter((b) => {
+        const s = String(b.status || '').toLowerCase()
+        return s === 'approved' || s === 'done'
+      })
+      .map((b) => {
+        const d = String(b.date || '').match(/(\d{4}-\d{2}-\d{2})/)?.[1] || String(b.date || '')
+        const slot = String(b.slotId || '').trim()
+        return d && slot ? `${d}|${slot}` : ''
+      })
+      .filter(Boolean)
+    return [...new Set([...fromTaken, ...fromBookings])]
   } catch {
     return []
   }

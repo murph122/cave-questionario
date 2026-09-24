@@ -110,7 +110,12 @@ export const ui = {
   adminEmpty: { it: 'Nessuna prenotazione.', zh: '暂无预约。' },
   adminApprove: { it: 'Conferma', zh: '确认' },
   adminRevoke: { it: 'Revoca', zh: '撤销确认' },
-  adminCancel: { it: 'Annulla', zh: '取消预约' },
+  adminCancel: { it: 'Elimina prenotazione', zh: '删除预约' },
+  adminCancelConfirm: {
+    it: 'Eliminare definitivamente questa prenotazione?',
+    zh: '确定永久删除这条预约吗？',
+  },
+  adminDeleted: { it: 'Prenotazione eliminata', zh: '预约已删除' },
   adminManualLabel: {
     it: 'Conferma con codice (anche se non compare in elenco)',
     zh: '用代码确认（列表没有也能确认）',
@@ -136,25 +141,26 @@ export const ui = {
 
   qrTitle: { it: 'QR prenotazione', zh: '预约二维码' },
   qrSub: {
-    it: 'Inserisci l’URL pubblico del sito (Vercel), poi scarica il QR.',
-    zh: '填写网站的公网地址（Vercel），再生成/下载二维码。',
+    it: 'Il QR apre la pagina di prenotazione (con https).',
+    zh: '二维码打开预约页（含 https）。',
   },
   qrUrlLabel: { it: 'URL pubblico del sito', zh: '网站公网地址' },
+  qrEncodes: { it: 'Il QR punta a', zh: '二维码指向' },
   qrLocalWarn: {
-    it: 'Attenzione: localhost / IP locale NON funziona sul telefono. Incolla l’URL Vercel (https://….vercel.app).',
-    zh: '注意：localhost / 局域网地址手机打不开。请粘贴 Vercel 公网地址（https://….vercel.app）。',
+    it: 'Attenzione: localhost / IP locale NON funziona sul telefono. Usa https://cave-questionario.vercel.app',
+    zh: '注意：localhost / 局域网地址手机打不开。请用 https://cave-questionario.vercel.app',
   },
   qrNeedPublic: {
-    it: 'Incolla qui l’URL pubblico da Vercel → Domains / Visit (es. https://nome.vercel.app).',
-    zh: '请在此粘贴 Vercel → Domains / Visit 里的公网地址（如 https://名字.vercel.app）。',
+    it: 'Incolla https://cave-questionario.vercel.app',
+    zh: '请填写 https://cave-questionario.vercel.app',
   },
   qrWaiting: {
-    it: 'Il QR appare solo con un URL https pubblico valido.',
-    zh: '只有填写有效的 https 公网地址后才会生成二维码。',
+    it: 'Il QR appare con un URL https pubblico valido.',
+    zh: '填写有效的 https 公网地址后才会生成二维码。',
   },
   qrHint: {
-    it: 'Apri il sito su Vercel (non localhost), vai su /qr, controlla che sotto al QR ci sia https://….vercel.app/prenota, poi scarica.',
-    zh: '请用手机浏览器能打开的 Vercel 网站进入 /qr，确认二维码下方是 https://….vercel.app/prenota，再下载/扫码。',
+    it: 'Apri https://cave-questionario.vercel.app/qr — il codice punta a /prenota.',
+    zh: '打开 https://cave-questionario.vercel.app/qr — 二维码内容指向 /prenota 预约页。',
   },
   qrDownload: { it: 'Scarica PNG', zh: '下载 PNG' },
 
