@@ -141,28 +141,40 @@ export const ui = {
 
   qrTitle: { it: 'QR prenotazione', zh: '预约二维码' },
   qrSub: {
-    it: 'Il QR apre la pagina di prenotazione (con https).',
-    zh: '二维码打开预约页（含 https）。',
+    it: 'QR fisso verso il sito pubblico (sempre con https://).',
+    zh: '固定指向公网网站（始终带 https://）。',
+  },
+  qrFixedUrl: {
+    it: 'Il codice QR apre sempre questo indirizzo:',
+    zh: '二维码始终打开此地址：',
   },
   qrUrlLabel: { it: 'URL pubblico del sito', zh: '网站公网地址' },
   qrEncodes: { it: 'Il QR punta a', zh: '二维码指向' },
   qrLocalWarn: {
-    it: 'Attenzione: localhost / IP locale NON funziona sul telefono. Usa https://cave-questionario.vercel.app',
-    zh: '注意：localhost / 局域网地址手机打不开。请用 https://cave-questionario.vercel.app',
+    it: 'Attenzione: localhost / IP locale NON funziona sul telefono.',
+    zh: '注意：localhost / 局域网地址手机打不开。',
   },
   qrNeedPublic: {
     it: 'Incolla https://cave-questionario.vercel.app',
     zh: '请填写 https://cave-questionario.vercel.app',
   },
   qrWaiting: {
-    it: 'Il QR appare con un URL https pubblico valido.',
-    zh: '填写有效的 https 公网地址后才会生成二维码。',
+    it: 'Generazione QR…',
+    zh: '正在生成二维码…',
   },
   qrHint: {
-    it: 'Apri https://cave-questionario.vercel.app/qr — il codice punta a /prenota.',
-    zh: '打开 https://cave-questionario.vercel.app/qr — 二维码内容指向 /prenota 预约页。',
+    it: 'Scansiona per aprire https://cave-questionario.vercel.app',
+    zh: '扫码打开 https://cave-questionario.vercel.app',
   },
   qrDownload: { it: 'Scarica PNG', zh: '下载 PNG' },
+
+  adminReschedule: { it: 'Cambia orario', zh: '修改时段' },
+  adminRescheduleSave: { it: 'Salva nuovo orario', zh: '保存新时段' },
+  adminRescheduled: { it: 'Orario aggiornato', zh: '时段已更新' },
+  adminRescheduleFail: {
+    it: 'Impossibile cambiare orario (fascia già confermata?).',
+    zh: '无法改期（该时段可能已被确认占用）。',
+  },
 
   thanksTitle: { it: 'Grazie', zh: '谢谢' },
   thanksBookSub: {

@@ -160,6 +160,32 @@ export async function adminSetStatus(
   )
 }
 
+export async function adminReschedule(
+  password: string,
+  payload: {
+    participantCode: string
+    date?: string
+    slotId?: string
+    newDate: string
+    newSlotId: string
+  },
+) {
+  return postJsonWithTimeout<{ ok?: boolean; date?: string; slotId?: string; error?: string }>(
+    '/api/admin',
+    {
+      action: 'reschedule',
+      password,
+      participantCode: payload.participantCode,
+      date: payload.date || '',
+      slotId: payload.slotId || '',
+      newDate: payload.newDate,
+      newSlotId: payload.newSlotId,
+    },
+    20000,
+    { 'X-Admin-Password': password },
+  )
+}
+
 export async function adminPing(password: string) {
   return postJsonWithTimeout<{
     ok?: boolean

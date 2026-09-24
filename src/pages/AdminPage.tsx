@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { AppShell } from '../components/AppShell'
-import { adminListBookings, adminLogin, adminPing, adminSetStatus } from '../lib/api'
+import {
+  adminListBookings,
+  adminLogin,
+  adminPing,
+  adminReschedule,
+  adminSetStatus,
+} from '../lib/api'
 import { useLang } from '../i18n/LangContext'
 import type { UiKey } from '../i18n/ui'
 import {
@@ -27,22 +33,37 @@ const SESSION_KEY = 'cave-q:adminPass'
 
 function BookingCard({
   b,
+  dates,
   dateLocale,
   busy,
   onApprove,
   onRevoke,
   onCancel,
+  onReschedule,
   t,
 }: {
   b: Row
+  dates: string[]
   dateLocale: string
   busy: boolean
   onApprove: () => void
   onRevoke: () => void
   onCancel: () => void
+  onReschedule: (newDate: string, newSlotId: string) => void
   t: (k: UiKey) => string
 }) {
+  const [editDate, setEditDate] = useState(normalizeIsoDate(b.date) || dates[0] || '')
+  const [editSlot, setEditSlot] = useState(String(b.slotId || TIME_SLOTS[0]?.id || ''))
   const slot = TIME_SLOTS.find((s) => s.id === b.slotId)?.label || b.slotId
+  const dirty =
+    normalizeIsoDate(editDate) !== normalizeIsoDate(b.date) ||
+    String(editSlot) !== String(b.slotId || '')
+
+  useEffect(() => {
+    setEditDate(normalizeIsoDate(b.date) || dates[0] || '')
+    setEditSlot(String(b.slotId || TIME_SLOTS[0]?.id || ''))
+  }, [b.date, b.slotId, b.participantCode, dates])
+
   return (
     <article className="admin-card">
       <p className="admin-code">{b.participantCode}</p>
@@ -52,6 +73,45 @@ function BookingCard({
         {b.date ? formatDateLocale(b.date, dateLocale) : '—'} · {slot}
       </p>
       <p className="body muted">{b.email || b.phone || '—'}</p>
+
+      <div className="admin-reschedule">
+        <p className="body muted" style={{ marginBottom: '0.4rem' }}>
+          {t('adminReschedule')}
+        </p>
+        <label className="field">
+          <span>{t('dateLabel')}</span>
+          <select value={editDate} onChange={(e) => setEditDate(e.target.value)} disabled={busy}>
+            {dates.map((d) => (
+              <option key={d} value={d}>
+                {formatDateLocale(d, dateLocale)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          <span>{t('slotLabel')}</span>
+          <select
+            value={editSlot}
+            onChange={(e) => setEditSlot(e.target.value)}
+            disabled={busy}
+          >
+            {TIME_SLOTS.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={busy || !dirty || !editDate || !editSlot}
+          onClick={() => onReschedule(editDate, editSlot)}
+        >
+          {t('adminRescheduleSave')}
+        </button>
+      </div>
+
       <div className="cta-row">
         {b.status !== 'approved' && b.status !== 'done' && (
           <button type="button" className="btn btn-primary" disabled={busy} onClick={onApprove}>
@@ -185,10 +245,31 @@ export function AdminPage() {
     }
   }
 
+  async function reschedule(b: Row, newDate: string, newSlotId: string) {
+    setBusy(true)
+    setError('')
+    setInfo('')
+    try {
+      await adminReschedule(password, {
+        participantCode: b.participantCode,
+        date: normalizeIsoDate(b.date),
+        slotId: b.slotId,
+        newDate: normalizeIsoDate(newDate),
+        newSlotId,
+      })
+      setInfo(`${b.participantCode} — ${t('adminRescheduled')}`)
+      await refresh(password)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('adminRescheduleFail'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function approveManual(e: FormEvent) {
     e.preventDefault()
     const code = manualCode.trim().toUpperCase()
-    if (code.length < 6) {
+    if (code.length < 2) {
       setError(t('errCode'))
       return
     }
@@ -219,6 +300,34 @@ export function AdminPage() {
     )
   }
 
+  function cardProps(b: Row) {
+    return {
+      b,
+      dates,
+      dateLocale,
+      busy,
+      t,
+      onApprove: () =>
+        setStatus(b.participantCode, 'approved', {
+          date: b.date,
+          slotId: b.slotId,
+          contactName: b.contactName,
+          email: b.email,
+        }),
+      onRevoke: () =>
+        setStatus(b.participantCode, 'pending', {
+          date: b.date,
+          slotId: b.slotId,
+        }),
+      onCancel: () =>
+        setStatus(b.participantCode, 'cancelled', {
+          date: b.date,
+          slotId: b.slotId,
+        }),
+      onReschedule: (newDate: string, newSlotId: string) => reschedule(b, newDate, newSlotId),
+    }
+  }
+
   return (
     <AppShell title={t('adminTitle')} subtitle={t('adminListSub')}>
       <div className="stack">
@@ -236,7 +345,7 @@ export function AdminPage() {
             <input
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-              placeholder="CAVE-XXXX"
+              placeholder="MARROS"
               autoComplete="off"
             />
           </label>
@@ -332,30 +441,7 @@ export function AdminPage() {
               {pending.map((b) => (
                 <BookingCard
                   key={`p-${b.participantCode}-${b.date}-${b.slotId}`}
-                  b={b}
-                  dateLocale={dateLocale}
-                  busy={busy}
-                  t={t}
-                  onApprove={() =>
-                    setStatus(b.participantCode, 'approved', {
-                      date: b.date,
-                      slotId: b.slotId,
-                      contactName: b.contactName,
-                      email: b.email,
-                    })
-                  }
-                  onRevoke={() =>
-                    setStatus(b.participantCode, 'pending', {
-                      date: b.date,
-                      slotId: b.slotId,
-                    })
-                  }
-                  onCancel={() =>
-                    setStatus(b.participantCode, 'cancelled', {
-                      date: b.date,
-                      slotId: b.slotId,
-                    })
-                  }
+                  {...cardProps(b)}
                 />
               ))}
             </div>
@@ -369,30 +455,7 @@ export function AdminPage() {
               {approved.map((b) => (
                 <BookingCard
                   key={`a-${b.participantCode}-${b.date}-${b.slotId}`}
-                  b={b}
-                  dateLocale={dateLocale}
-                  busy={busy}
-                  t={t}
-                  onApprove={() =>
-                    setStatus(b.participantCode, 'approved', {
-                      date: b.date,
-                      slotId: b.slotId,
-                      contactName: b.contactName,
-                      email: b.email,
-                    })
-                  }
-                  onRevoke={() =>
-                    setStatus(b.participantCode, 'pending', {
-                      date: b.date,
-                      slotId: b.slotId,
-                    })
-                  }
-                  onCancel={() =>
-                    setStatus(b.participantCode, 'cancelled', {
-                      date: b.date,
-                      slotId: b.slotId,
-                    })
-                  }
+                  {...cardProps(b)}
                 />
               ))}
             </div>

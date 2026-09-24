@@ -131,6 +131,10 @@ export function sheetsWebhookApi(mode: string, cwd: string): Plugin {
                 action?: string
                 participantCode?: string
                 status?: string
+                date?: string
+                slotId?: string
+                newDate?: string
+                newSlotId?: string
               }
               if (!isAdmin(req, body)) return send(res, 401, { error: 'Unauthorized' })
               if (body.action === 'login') return send(res, 200, { ok: true })
@@ -153,6 +157,22 @@ export function sheetsWebhookApi(mode: string, cwd: string): Plugin {
                   ...(body as object),
                 })
                 return send(res, 200, { ok: true, status })
+              }
+              if (body.action === 'reschedule') {
+                if (!webhook) return send(res, 503, { error: 'SHEETS_WEBHOOK_URL missing' })
+                const code = String(body.participantCode || '').toUpperCase().trim()
+                if (!code || !body.newDate || !body.newSlotId) {
+                  return send(res, 400, { error: 'participantCode, newDate, newSlotId required' })
+                }
+                const data = await postSheets(webhook, {
+                  type: 'reschedule',
+                  participantCode: code,
+                  date: body.date || '',
+                  slotId: body.slotId || '',
+                  newDate: body.newDate,
+                  newSlotId: body.newSlotId,
+                })
+                return send(res, 200, { ok: true, ...data })
               }
               if (body.action === 'ping') {
                 if (!webhook) return send(res, 503, { error: 'SHEETS_WEBHOOK_URL missing' })

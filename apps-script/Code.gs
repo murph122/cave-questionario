@@ -155,6 +155,20 @@ function doPost(e) {
       })
     }
 
+    if (type === 'reschedule') {
+      var codeR = String(data.participantCode || '').toUpperCase().trim()
+      var oldDate = normalizeDate_(data.date || data.oldDate || '')
+      var oldSlot = normalizeSlot_(data.slotId || data.oldSlotId || '')
+      var newDate = normalizeDate_(data.newDate || '')
+      var newSlot = normalizeSlot_(data.newSlotId || '')
+      if (!codeR || !newDate || !newSlot) {
+        return json_({ ok: false, error: 'missing_fields' })
+      }
+      var moved = rescheduleBooking_(codeR, oldDate, oldSlot, newDate, newSlot)
+      if (!moved) return json_({ ok: false, error: 'not_found_or_slot_taken' })
+      return json_({ ok: true, date: newDate, slotId: newSlot })
+    }
+
     if (type === 'ping') {
       return json_({
         ok: true,
@@ -340,6 +354,47 @@ function setBookingStatus_(code, status, date, slotId) {
     return true
   }
   return false
+}
+
+/**
+ * Move a booking to a new date/slot. Fails if the target slot is already
+ * approved/done by someone else (or another row).
+ */
+function rescheduleBooking_(code, oldDate, oldSlot, newDate, newSlot) {
+  ensureBookingsHeader_()
+  var sheet = bookingsSheet_()
+  var values = sheet.getDataRange().getValues()
+  var codeU = String(code || '')
+    .toUpperCase()
+    .trim()
+  var rowIndex = -1
+  var currentStatus = 'pending'
+
+  for (var i = values.length - 1; i >= 1; i--) {
+    if (String(values[i][2]).toUpperCase().trim() !== codeU) continue
+    if (oldDate && normalizeDate_(values[i][3]) !== oldDate) continue
+    if (oldSlot && normalizeSlot_(values[i][4]) !== oldSlot) continue
+    rowIndex = i + 1
+    currentStatus = String(values[i][9] || 'pending').toLowerCase().trim()
+    break
+  }
+  if (rowIndex < 0) return false
+
+  // Block if another booking already confirmed that slot
+  var key = newDate + '|' + newSlot
+  var taken = takenKeys_()
+  for (var t = 0; t < taken.length; t++) {
+    if (taken[t] !== key) continue
+    // Same row moving within approved: allow if current row is the one holding the slot
+    var sameSlot =
+      normalizeDate_(values[rowIndex - 1][3]) === newDate &&
+      normalizeSlot_(values[rowIndex - 1][4]) === newSlot
+    if (!sameSlot) return false
+  }
+
+  sheet.getRange(rowIndex, 4).setValue(dateForSheet_(newDate))
+  sheet.getRange(rowIndex, 5).setValue(newSlot)
+  return true
 }
 
 /** Edit this address shown in confirmation emails. */

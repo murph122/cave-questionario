@@ -69,6 +69,22 @@ export default async function handler(req, res) {
         return json(res, 200, { ok: true, status })
       }
 
+      if (body.action === 'reschedule') {
+        const code = String(body.participantCode || '').toUpperCase().trim()
+        if (!code || !body.newDate || !body.newSlotId) {
+          return json(res, 400, { error: 'participantCode, newDate, newSlotId required' })
+        }
+        const data = await postSheets(webhook, {
+          type: 'reschedule',
+          participantCode: code,
+          date: body.date || '',
+          slotId: body.slotId || '',
+          newDate: body.newDate,
+          newSlotId: body.newSlotId,
+        })
+        return json(res, 200, { ok: true, ...data })
+      }
+
       if (body.action === 'ping') {
         const data = await postSheets(webhook, { type: 'ping' })
         return json(res, 200, { ok: true, ...data })
