@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useLang } from '../i18n/LangContext'
 import type { Lang } from '../i18n/types'
+import { CosmicParallax } from './CosmicParallax'
 import { TechFx } from './TechFx'
 import './AppShell.css'
 
@@ -18,6 +19,8 @@ type Props = {
   title?: string
   subtitle?: string
   progress?: number
+  /** Full-bleed cinematic home (no opaque card title chrome). */
+  hero?: boolean
 }
 
 function LanguageSwitcher() {
@@ -39,15 +42,16 @@ function LanguageSwitcher() {
   )
 }
 
-export function AppShell({ children, title, subtitle, progress }: Props) {
+export function AppShell({ children, title, subtitle, progress, hero }: Props) {
   const { pathname } = useLocation()
   const theme = THEME_BY_PATH[pathname] ?? 'theme-home'
   const { lang, t } = useLang()
+  const isHomeHero = Boolean(hero || pathname === '/')
 
   return (
-    <div className={`shell ${theme}`}>
-      <div className="shell-bg" aria-hidden />
-      <TechFx />
+    <div className={`shell ${theme}${isHomeHero ? ' shell-hero' : ''}`}>
+      {isHomeHero ? <CosmicParallax /> : <div className="shell-bg" aria-hidden />}
+      {!isHomeHero && <TechFx />}
 
       <div className="lang-float">
         <span className="lang-float-label">Lingua / 语言</span>
@@ -80,8 +84,11 @@ export function AppShell({ children, title, subtitle, progress }: Props) {
         </div>
       )}
 
-      <main className="shell-main">
-        <div className="panel fade-in" key={`${pathname}-${lang}`}>
+      <main className={`shell-main${isHomeHero ? ' shell-main-hero' : ''}`}>
+        <div
+          className={`panel fade-in${isHomeHero ? ' panel-hero' : ''}`}
+          key={`${pathname}-${lang}`}
+        >
           {title && <h1 className="panel-title">{title}</h1>}
           {subtitle && <p className="panel-sub">{subtitle}</p>}
           {children}

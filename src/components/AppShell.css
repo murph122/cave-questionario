@@ -5,7 +5,7 @@
   isolation: isolate;
 }
 
-.shell > *:not(.shell-bg):not(.tech-fx) {
+.shell > *:not(.shell-bg):not(.tech-fx):not(.cosmic) {
   position: relative;
   z-index: 1;
 }

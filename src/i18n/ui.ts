@@ -9,20 +9,20 @@ export const ui = {
   langAria: { it: 'Cambia lingua', zh: '切换语言' },
 
   welcomeTitle: {
-    it: 'Stress, emozioni e immersione nel CAVE',
-    zh: 'CAVE 中的压力、情绪与沉浸',
+    it: 'Entra nel CAVE, inizia un’esplorazione straordinaria.',
+    zh: '走进 CAVE，开启一场奇妙探索。',
   },
   welcomeSub: {
-    it: 'Scopri l’attività e prenota il tuo orario.',
-    zh: '了解活动并预约时段。',
+    it: 'Laboratorio di realtà virtuale immersiva.',
+    zh: '沉浸式虚拟现实实验室。',
   },
   welcomeBody: {
-    it: 'Questa esperienza nel CAVE esplora stress, emozioni e immersione. Prenota una fascia oraria; lo sperimentatore confermerà la tua prenotazione. Conserva il codice CAVE-XXXX ricevuto.',
-    zh: '本活动在 CAVE 中探索压力、情绪与沉浸体验。请预约时段，实验者会确认你的预约。请保存收到的 CAVE-XXXX 代码。',
+    it: 'Nello spazio virtuale a 360°, vivi immagini e interazioni immersive. Benvenuto nel laboratorio CAVE: esplora in prima persona come la realtà virtuale cambia il modo in cui percepiamo il mondo.',
+    zh: '在环绕式虚拟空间中，感受沉浸式影像与互动体验。欢迎来到 CAVE 实验室，亲自探索虚拟现实如何改变我们感知世界的方式。',
   },
   welcomeConsent: {
-    it: 'Continuando dichiari di partecipare volontariamente. I dati di prenotazione sono usati solo per organizzare l’esperimento.',
-    zh: '继续即表示自愿参与。预约信息仅用于安排实验。',
+    it: 'Continuando dichiari di partecipare volontariamente. I dati di prenotazione sono usati solo per organizzare l’esperienza.',
+    zh: '继续即表示自愿参与。预约信息仅用于安排体验。',
   },
   ctaBook: { it: 'Prenota', zh: '预约' },
   ctaQr: { it: 'QR per prenotare', zh: '扫码预约' },
