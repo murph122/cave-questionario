@@ -68,31 +68,18 @@ export function sheetsWebhookApi(mode: string, cwd: string): Plugin {
             if (!body.date || !body.slotId || !body.participantCode) {
               return send(res, 400, { error: 'Campi obbligatori mancanti.' })
             }
-            try {
-              const listed = await listBookings(webhook)
-              const taken = Array.isArray(listed.taken) ? (listed.taken as string[]) : []
-              if (taken.includes(`${body.date}|${body.slotId}`)) {
-                return send(res, 409, { ok: false, error: 'slot_taken', taken })
-              }
-            } catch {
-              /* ignore */
-            }
             const result = await postSheets(webhook, {
               type: 'booking',
               ...body,
               siteUrl: body.siteUrl || siteUrl,
               location: body.location || labLocation,
             })
-            try {
-              await postSheets(webhook, {
-                type: 'sendBookingEmail',
-                ...body,
-                siteUrl: body.siteUrl || siteUrl,
-                location: body.location || labLocation,
-              })
-            } catch {
-              /* email optional */
-            }
+            void postSheets(webhook, {
+              type: 'sendBookingEmail',
+              ...body,
+              siteUrl: body.siteUrl || siteUrl,
+              location: body.location || labLocation,
+            }).catch(() => undefined)
             return send(res, 200, { ok: true, status: 'pending', ...result })
           }
 

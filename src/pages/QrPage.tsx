@@ -13,13 +13,24 @@ function isLocalHost(url: string) {
 function resolvePublicSiteUrl(): string {
   const fromEnv = (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.trim()
   if (fromEnv && !isLocalHost(fromEnv)) return fromEnv.replace(/\/$/, '')
+
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin.replace(/\/$/, '')
+    // On the real Vercel site, use current origin so QR works without typing
+    if (origin && !isLocalHost(origin) && /^https:/i.test(origin)) return origin
+  }
   return ''
 }
 
 export function QrPage() {
   const { t } = useLang()
-  const [baseUrl, setBaseUrl] = useState(() => resolvePublicSiteUrl())
+  const [baseUrl, setBaseUrl] = useState('')
   const [dataUrl, setDataUrl] = useState('')
+  const [genError, setGenError] = useState('')
+
+  useEffect(() => {
+    setBaseUrl(resolvePublicSiteUrl())
+  }, [])
 
   const cleaned = baseUrl.replace(/\/$/, '')
   const target = cleaned ? `${cleaned}/prenota` : ''
@@ -29,13 +40,28 @@ export function QrPage() {
   useEffect(() => {
     if (!canUse || !target) {
       setDataUrl('')
+      setGenError('')
       return
     }
+    let cancelled = false
+    setGenError('')
     QRCode.toDataURL(target, {
       width: 320,
       margin: 2,
       color: { dark: '#062018', light: '#ecfeff' },
-    }).then(setDataUrl)
+    })
+      .then((url) => {
+        if (!cancelled) setDataUrl(url)
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setDataUrl('')
+          setGenError(err instanceof Error ? err.message : 'QR error')
+        }
+      })
+    return () => {
+      cancelled = true
+    }
   }, [canUse, target])
 
   return (
@@ -46,11 +72,12 @@ export function QrPage() {
           <input
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value.trim())}
-            placeholder="https://xxxx.vercel.app"
+            placeholder="https://cave-questionario.vercel.app"
           />
         </label>
         {!cleaned && <p className="error">{t('qrNeedPublic')}</p>}
         {warnLocal && <p className="error">{t('qrLocalWarn')}</p>}
+        {genError && <p className="error">{genError}</p>}
         {canUse && dataUrl ? (
           <img className="qr-img" src={dataUrl} alt="QR prenotazione CAVE" />
         ) : (

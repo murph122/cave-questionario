@@ -82,6 +82,10 @@ export const ui = {
     zh: '该时段已被预约。请从下方临近推荐中选择。',
   },
   errGeneric: { it: 'Invio non riuscito.', zh: '提交失败。' },
+  errTimeout: {
+    it: 'La richiesta ha impiegato troppo tempo. Non riprovare subito: controlla la mail o chiedi allo sperimentatore se la prenotazione è già registrata.',
+    zh: '请求超时。请先不要马上再点一次：先查邮箱，或问管理员预约是否已经写入。',
+  },
   errEmailRequired: {
     it: 'Inserisci un’email valida: ci invieremo conferma con codice, data e luogo.',
     zh: '请填写有效邮箱：系统会发送含代码、时间与地点的确认邮件。',

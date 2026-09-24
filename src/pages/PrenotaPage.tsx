@@ -109,6 +109,8 @@ export function PrenotaPage() {
         setSuggestions(near)
         setRemoteTaken(taken)
         setError(t('errSlotTakenSuggest'))
+      } else if (String(e.message) === 'TIMEOUT' || /abort/i.test(String(e.message))) {
+        setError(t('errTimeout'))
       } else {
         setError(err instanceof Error ? err.message : t('errGeneric'))
       }

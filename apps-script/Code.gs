@@ -62,17 +62,52 @@ function doPost(e) {
     if (type === 'booking') {
       ensureBookingsHeader_()
       var sheet = bookingsSheet_()
-      var key = String(data.date) + '|' + String(data.slotId)
+      var bid = String(data.bookingId || '').trim()
+      var codeB = String(data.participantCode || '').toUpperCase().trim()
+      var dateB = normalizeDate_(data.date || '')
+      var slotB = normalizeSlot_(data.slotId || '')
+      var existing = listBookings_()
+
+      // Idempotent retry: same bookingId already written
+      if (bid) {
+        for (var i = 0; i < existing.length; i++) {
+          if (String(existing[i].bookingId) === bid) {
+            return json_({
+              ok: true,
+              status: existing[i].status || 'pending',
+              duplicate: true,
+            })
+          }
+        }
+      }
+
+      // Same person + same slot still active → treat as success (avoid double row on timeout retry)
+      for (var j = 0; j < existing.length; j++) {
+        if (
+          existing[j].participantCode === codeB &&
+          existing[j].date === dateB &&
+          existing[j].slotId === slotB &&
+          existing[j].status !== 'cancelled'
+        ) {
+          return json_({
+            ok: true,
+            status: existing[j].status || 'pending',
+            duplicate: true,
+          })
+        }
+      }
+
+      var key = dateB + '|' + slotB
       if (takenKeys_().indexOf(key) !== -1) {
         return json_({ ok: false, error: 'slot_taken' })
       }
-      // Save first — never block the HTTP response on email
+
       sheet.appendRow([
         new Date(),
-        data.bookingId || '',
-        String(data.participantCode || '').toUpperCase(),
-        data.date || '',
-        data.slotId || '',
+        bid || Utilities.getUuid(),
+        codeB,
+        dateB,
+        slotB,
         data.contactName || '',
         data.email || '',
         data.phone || '',

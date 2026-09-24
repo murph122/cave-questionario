@@ -52,6 +52,12 @@ async function postJsonWithTimeout<T>(
       throw err
     }
     return data
+  } catch (err) {
+    const name = err instanceof Error ? err.name : ''
+    if (name === 'AbortError' || (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError')) {
+      throw new Error('TIMEOUT')
+    }
+    throw err
   } finally {
     window.clearTimeout(timer)
   }
@@ -71,6 +77,7 @@ export async function createBooking(payload: BookPayload) {
       location: payload.location || import.meta.env.VITE_LAB_LOCATION || undefined,
       createdAt: payload.createdAt || new Date().toISOString(),
     },
+    55000,
   )
 }
 

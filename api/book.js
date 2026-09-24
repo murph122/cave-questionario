@@ -1,5 +1,5 @@
 import { postSheets } from '../lib/sheetsClient.js'
-import { listBookingsFromSheets, json } from '../lib/bookingsApi.js'
+import { json } from '../lib/bookingsApi.js'
 
 async function readBody(req) {
   const chunks = []
@@ -24,21 +24,6 @@ export default async function handler(req, res) {
       return json(res, 400, { error: 'Serve email o telefono.' })
     }
 
-    // Soft conflict check — never block booking if list is slow
-    try {
-      const listed = await Promise.race([
-        listBookingsFromSheets(webhook),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('list timeout')), 8000)),
-      ])
-      const taken = Array.isArray(listed.taken) ? listed.taken : []
-      const key = `${body.date}|${body.slotId}`
-      if (taken.includes(key)) {
-        return json(res, 409, { ok: false, error: 'slot_taken', taken })
-      }
-    } catch {
-      /* Apps Script still checks duplicates on write */
-    }
-
     const siteUrl =
       body.siteUrl ||
       process.env.VITE_PUBLIC_SITE_URL ||
@@ -57,25 +42,17 @@ export default async function handler(req, res) {
       status: 'pending',
     }
 
-    const result = await postSheets(webhook, payload, 20000)
+    // Write booking only — respond ASAP so the browser does not abort
+    const result = await postSheets(webhook, payload, 25000)
 
-    // Email is best-effort and must not fail the booking
-    let emailSent = false
-    try {
-      const mail = await postSheets(
-        webhook,
-        { type: 'sendBookingEmail', ...payload },
-        12000,
-      )
-      emailSent = Boolean(mail.emailSent)
-    } catch {
-      emailSent = false
-    }
+    // Fire-and-forget email (do not block JSON response)
+    postSheets(webhook, { type: 'sendBookingEmail', ...payload }, 15000).catch(() => {})
 
     return json(res, 200, {
       ok: true,
       status: 'pending',
-      emailSent,
+      emailSent: false,
+      emailDeferred: true,
       ...result,
     })
   } catch (err) {
