@@ -1,9 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { AppShell } from '../components/AppShell'
 import { adminListBookings, adminLogin, adminPing, adminSetStatus } from '../lib/api'
 import { useLang } from '../i18n/LangContext'
-import { formatDateLocale, TIME_SLOTS } from '../data/slots'
+import type { UiKey } from '../i18n/ui'
+import {
+  formatDateLocale,
+  formatDateShort,
+  listAvailableDates,
+  TIME_SLOTS,
+} from '../data/slots'
 import './AdminPage.css'
 
 type Row = {
@@ -18,6 +24,52 @@ type Row = {
 
 const SESSION_KEY = 'cave-q:adminPass'
 
+function BookingCard({
+  b,
+  dateLocale,
+  busy,
+  onApprove,
+  onRevoke,
+  onCancel,
+  t,
+}: {
+  b: Row
+  dateLocale: string
+  busy: boolean
+  onApprove: () => void
+  onRevoke: () => void
+  onCancel: () => void
+  t: (k: UiKey) => string
+}) {
+  const slot = TIME_SLOTS.find((s) => s.id === b.slotId)?.label || b.slotId
+  return (
+    <article className="admin-card">
+      <p className="admin-code">{b.participantCode}</p>
+      <p className="body">
+        {b.contactName || '—'}
+        <br />
+        {b.date ? formatDateLocale(b.date, dateLocale) : '—'} · {slot}
+      </p>
+      <p className="body muted">{b.email || b.phone || '—'}</p>
+      <div className="cta-row">
+        {b.status !== 'approved' && b.status !== 'done' && (
+          <button type="button" className="btn btn-primary" disabled={busy} onClick={onApprove}>
+            {t('adminApprove')}
+          </button>
+        )}
+        {(b.status === 'approved' || b.status === 'done') && (
+          <button type="button" className="btn btn-ghost" disabled={busy} onClick={onRevoke}>
+            {t('adminRevoke')}
+          </button>
+        )}
+        <button type="button" className="btn btn-ghost" disabled={busy} onClick={onCancel}>
+          {t('adminCancel')}
+        </button>
+      </div>
+    </article>
+  )
+}
+
 export function AdminPage() {
   const { lang, t } = useLang()
   const [password, setPassword] = useState(() => sessionStorage.getItem(SESSION_KEY) || '')
@@ -29,6 +81,28 @@ export function AdminPage() {
   const [manualCode, setManualCode] = useState('')
   const [health, setHealth] = useState('')
   const dateLocale = lang === 'zh' ? 'zh-CN' : 'it-IT'
+  const dates = useMemo(() => listAvailableDates(), [])
+
+  const pending = useMemo(
+    () => rows.filter((b) => b.status === 'pending' || b.status === 'unknown'),
+    [rows],
+  )
+  const approved = useMemo(
+    () => rows.filter((b) => b.status === 'approved' || b.status === 'done'),
+    [rows],
+  )
+
+  const bySlot = useMemo(() => {
+    const map = new Map<string, Row[]>()
+    for (const b of rows) {
+      if (!b.date || !b.slotId || b.status === 'cancelled') continue
+      const key = `${b.date}|${b.slotId}`
+      const list = map.get(key) || []
+      list.push(b)
+      map.set(key, list)
+    }
+    return map
+  }, [rows])
 
   async function refresh(pass: string) {
     const list = await adminListBookings(pass)
@@ -36,8 +110,8 @@ export function AdminPage() {
     try {
       const ping = await adminPing(pass)
       setHealth(
-        ping.sheet
-          ? `${t('adminHealthOk')} · ${ping.bookingsSheet || ping.sheet || '?'} · ${ping.bookings ?? list.length} bookings`
+        ping.bookingsSheet || ping.sheet
+          ? `${t('adminHealthOk')} · ${ping.bookingsSheet || ping.sheet} · ${ping.bookings ?? list.length} bookings`
           : t('adminHealthOk'),
       )
     } catch (err) {
@@ -128,7 +202,11 @@ export function AdminPage() {
       <div className="stack">
         {health && <p className="body muted">{health}</p>}
         {error && <p className="error">{error}</p>}
-        {info && <p className="body" style={{ color: '#86efac' }}>{info}</p>}
+        {info && (
+          <p className="body" style={{ color: '#86efac' }}>
+            {info}
+          </p>
+        )}
 
         <form className="stack form" onSubmit={approveManual}>
           <label className="field">
@@ -160,63 +238,118 @@ export function AdminPage() {
         >
           {t('adminRefresh')}
         </button>
-        <div className="admin-list">
-          {rows.length === 0 && !busy && (
-            <p className="body muted">
-              {t('adminEmpty')}
-              <br />
-              {t('adminEmptyHint')}
-            </p>
-          )}
-          {rows
-            .slice()
-            .reverse()
-            .map((b) => {
-              const slot = TIME_SLOTS.find((s) => s.id === b.slotId)?.label || b.slotId
-              return (
-                <article key={`${b.participantCode}-${b.date}-${b.slotId}`} className="admin-card">
-                  <p className="admin-code">{b.participantCode}</p>
-                  <p className="body">
-                    {b.contactName || '—'} · {b.date ? formatDateLocale(b.date, dateLocale) : '—'} ·{' '}
-                    {slot}
-                  </p>
-                  <p className="body muted">
-                    {b.email || b.phone || '—'} · status: <strong>{b.status}</strong>
-                  </p>
-                  <div className="cta-row">
-                    {b.status !== 'approved' && (
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        disabled={busy}
-                        onClick={() => setStatus(b.participantCode, 'approved')}
+
+        <h2 className="admin-section-title">{t('adminSchedule')}</h2>
+        <div className="admin-schedule-wrap">
+          <table className="admin-schedule">
+            <thead>
+              <tr>
+                <th>{lang === 'zh' ? '日期' : 'Data'}</th>
+                {TIME_SLOTS.map((s) => (
+                  <th key={s.id}>{s.label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {dates.map((d) => (
+                <tr key={d}>
+                  <th scope="row">{formatDateShort(d, dateLocale)}</th>
+                  {TIME_SLOTS.map((s) => {
+                    const cell = bySlot.get(`${d}|${s.id}`) || []
+                    const hasApproved = cell.some(
+                      (b) => b.status === 'approved' || b.status === 'done',
+                    )
+                    return (
+                      <td
+                        key={s.id}
+                        className={
+                          hasApproved
+                            ? 'cell-approved'
+                            : cell.length
+                              ? 'cell-pending'
+                              : 'cell-free'
+                        }
                       >
-                        {t('adminApprove')}
-                      </button>
-                    )}
-                    {b.status === 'approved' && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        disabled={busy}
-                        onClick={() => setStatus(b.participantCode, 'pending')}
-                      >
-                        {t('adminRevoke')}
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      disabled={busy}
-                      onClick={() => setStatus(b.participantCode, 'cancelled')}
-                    >
-                      {t('adminCancel')}
-                    </button>
-                  </div>
-                </article>
-              )
-            })}
+                        {cell.length === 0 ? (
+                          <span className="cell-empty">{t('adminSlotFree')}</span>
+                        ) : (
+                          cell.map((b) => (
+                            <div
+                              key={b.participantCode}
+                              className={
+                                b.status === 'approved' || b.status === 'done'
+                                  ? 'chip-approved'
+                                  : 'chip-pending'
+                              }
+                              title={`${b.participantCode} · ${b.status}`}
+                            >
+                              <strong>{b.contactName || b.participantCode}</strong>
+                              <span>
+                                {b.participantCode}
+                                {b.status === 'pending' ? ` · ${t('adminSlotPending')}` : ''}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+
+        <div className="admin-columns">
+          <section className="admin-col">
+            <h2 className="admin-section-title">
+              {t('adminColPending')} ({pending.length})
+            </h2>
+            <div className="admin-list">
+              {pending.length === 0 && <p className="body muted">{t('adminNoneInCol')}</p>}
+              {pending.map((b) => (
+                <BookingCard
+                  key={`p-${b.participantCode}-${b.date}-${b.slotId}`}
+                  b={b}
+                  dateLocale={dateLocale}
+                  busy={busy}
+                  t={t}
+                  onApprove={() => setStatus(b.participantCode, 'approved')}
+                  onRevoke={() => setStatus(b.participantCode, 'pending')}
+                  onCancel={() => setStatus(b.participantCode, 'cancelled')}
+                />
+              ))}
+            </div>
+          </section>
+          <section className="admin-col">
+            <h2 className="admin-section-title">
+              {t('adminColApproved')} ({approved.length})
+            </h2>
+            <div className="admin-list">
+              {approved.length === 0 && <p className="body muted">{t('adminNoneInCol')}</p>}
+              {approved.map((b) => (
+                <BookingCard
+                  key={`a-${b.participantCode}-${b.date}-${b.slotId}`}
+                  b={b}
+                  dateLocale={dateLocale}
+                  busy={busy}
+                  t={t}
+                  onApprove={() => setStatus(b.participantCode, 'approved')}
+                  onRevoke={() => setStatus(b.participantCode, 'pending')}
+                  onCancel={() => setStatus(b.participantCode, 'cancelled')}
+                />
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {rows.length === 0 && !busy && (
+          <p className="body muted">
+            {t('adminEmpty')}
+            <br />
+            {t('adminEmptyHint')}
+          </p>
+        )}
       </div>
     </AppShell>
   )

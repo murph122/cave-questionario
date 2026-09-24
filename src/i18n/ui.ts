@@ -29,8 +29,8 @@ export const ui = {
 
   bookTitle: { it: 'Prenota l’esperimento', zh: '预约实验' },
   bookSub: {
-    it: 'Giorni lavorativi 28 set – 9 ott 2026. Una persona per fascia. Conserva il codice CAVE.',
-    zh: '工作日 2026-09-28–10-09。每时段 1 人。请保存 CAVE 代码。',
+    it: 'Giorni lavorativi 28 set – 9 ott 2026. Quattro fasce al giorno. Lo slot si blocca solo dopo conferma dello sperimentatore.',
+    zh: '工作日 2026-09-28–10-09。每天四个时段。仅管理员确认后该时段才会锁定。',
   },
   codeLabel: { it: 'Il tuo codice partecipante', zh: '你的专属代码' },
   dateLabel: { it: 'Data', zh: '日期' },
@@ -77,9 +77,15 @@ export const ui = {
   adminTitle: { it: 'Admin — Prenotazioni', zh: '管理 — 预约' },
   adminSub: { it: 'Accesso riservato allo sperimentatore.', zh: '仅实验管理者可访问。' },
   adminListSub: {
-    it: 'Conferma o gestisci le prenotazioni dei partecipanti.',
-    zh: '确认或管理参与者的预约。',
+    it: 'Orario a sinistra; a destra le richieste in attesa e le confermate.',
+    zh: '左侧为时间表；右侧分栏显示待确认与已确认预约。',
   },
+  adminColPending: { it: 'In attesa', zh: '待确认' },
+  adminColApproved: { it: 'Confermate', zh: '已确认' },
+  adminSchedule: { it: 'Calendario fasce', zh: '时段时间表' },
+  adminSlotFree: { it: 'Libero', zh: '空闲' },
+  adminSlotPending: { it: 'richiesta', zh: '申请中' },
+  adminNoneInCol: { it: 'Nessuna in questa colonna.', zh: '此栏暂无。' },
   adminPass: { it: 'Password admin', zh: '管理员密码' },
   adminLogin: { it: 'Accedi', zh: '登录' },
   adminBadPass: { it: 'Password non corretta.', zh: '密码错误。' },

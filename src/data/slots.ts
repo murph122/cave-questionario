@@ -1,13 +1,12 @@
 export const BOOKING_START = '2026-09-28'
 export const BOOKING_END = '2026-10-09'
 
+/** Four lab sessions per working day. */
 export const TIME_SLOTS = [
-  { id: 'S1', label: '09:00 – 10:00' },
-  { id: 'S2', label: '10:00 – 11:00' },
-  { id: 'S3', label: '11:00 – 12:00' },
-  { id: 'S4', label: '14:00 – 15:00' },
-  { id: 'S5', label: '15:00 – 16:00' },
-  { id: 'S6', label: '16:00 – 17:00' },
+  { id: 'S1', label: '10:00 – 11:30' },
+  { id: 'S2', label: '13:00 – 14:30' },
+  { id: 'S3', label: '14:30 – 16:00' },
+  { id: 'S4', label: '16:00 – 17:30' },
 ] as const
 
 export type SlotId = (typeof TIME_SLOTS)[number]['id']
@@ -34,6 +33,16 @@ export function formatDateLocale(iso: string, locale: string = 'it-IT'): string 
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+  })
+}
+
+/** Short weekday + date for timetable headers. */
+export function formatDateShort(iso: string, locale: string = 'it-IT'): string {
+  const d = new Date(`${iso}T12:00:00`)
+  return d.toLocaleDateString(locale, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
   })
 }
 

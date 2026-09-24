@@ -223,9 +223,11 @@ function listBookings_() {
 }
 
 function takenKeys_() {
+  // Only approved (or completed) bookings lock the slot for others.
+  // Pending requests stay bookable until the experimenter confirms.
   return listBookings_()
     .filter(function (b) {
-      return b.status !== 'cancelled'
+      return b.status === 'approved' || b.status === 'done'
     })
     .map(function (b) {
       return b.date + '|' + b.slotId
@@ -257,12 +259,10 @@ function setBookingStatus_(code, status) {
 var LAB_LOCATION = 'Laboratorio CAVE / 3D Lab — Politecnico (aggiorna indirizzo in Code.gs)'
 
 var SLOT_LABELS = {
-  S1: '09:00 – 10:00',
-  S2: '10:00 – 11:00',
-  S3: '11:00 – 12:00',
-  S4: '14:00 – 15:00',
-  S5: '15:00 – 16:00',
-  S6: '16:00 – 17:00',
+  S1: '10:00 – 11:30',
+  S2: '13:00 – 14:30',
+  S3: '14:30 – 16:00',
+  S4: '16:00 – 17:30',
 }
 
 function sendBookingEmail_(data) {

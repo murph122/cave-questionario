@@ -6,7 +6,7 @@ import { createBooking, fetchTakenSlots } from '../lib/api'
 import { useParticipantCode } from '../hooks/useParticipant'
 import { formatDateLocale, listAvailableDates, TIME_SLOTS } from '../data/slots'
 import { suggestNearbySlots } from '../lib/nearbySlots'
-import { addLocalBooking, isSlotTakenLocally, saveJson } from '../lib/storage'
+import { addLocalBooking, saveJson } from '../lib/storage'
 import { useLang } from '../i18n/LangContext'
 
 export function PrenotaPage() {
@@ -32,11 +32,9 @@ export function PrenotaPage() {
   }, [])
 
   const takenKeys = useMemo(() => {
-    const local = TIME_SLOTS.filter((s) => isSlotTakenLocally(date, s.id)).map(
-      (s) => `${date}|${s.id}`,
-    )
-    return new Set([...remoteTaken, ...local])
-  }, [date, remoteTaken])
+    // Only server "taken" (approved slots) grey out — pending does not lock the slot.
+    return new Set(remoteTaken)
+  }, [remoteTaken])
 
   useEffect(() => {
     if (slotId && takenKeys.has(`${date}|${slotId}`)) {

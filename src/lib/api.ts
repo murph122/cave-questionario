@@ -18,6 +18,8 @@ export type BookingInfo = {
   date?: string
   slotId?: string
   contactName?: string
+  email?: string
+  phone?: string
 }
 
 async function postJsonWithTimeout<T>(
