@@ -12,11 +12,11 @@ import { useLang } from '../i18n/LangContext'
 export function PrenotaPage() {
   const navigate = useNavigate()
   const { lang, t } = useLang()
-  const { code, ensureCode } = useParticipantCode()
   const dates = useMemo(() => listAvailableDates(), [])
   const [date, setDate] = useState(dates[0] ?? '')
   const [slotId, setSlotId] = useState('')
-  const [contactName, setContactName] = useState('')
+  const [nome, setNome] = useState('')
+  const [cognome, setCognome] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [note, setNote] = useState('')
@@ -24,17 +24,16 @@ export function PrenotaPage() {
   const [error, setError] = useState('')
   const [suggestions, setSuggestions] = useState<ReturnType<typeof suggestNearbySlots>>([])
   const [busy, setBusy] = useState(false)
+  const { code } = useParticipantCode(nome, cognome)
 
   const dateLocale = lang === 'zh' ? 'zh-CN' : 'it-IT'
+  const contactName = `${nome.trim()} ${cognome.trim()}`.trim()
 
   useEffect(() => {
     fetchTakenSlots().then(setRemoteTaken).catch(() => setRemoteTaken([]))
   }, [])
 
-  const takenKeys = useMemo(() => {
-    // Only server "taken" (approved slots) grey out — pending does not lock the slot.
-    return new Set(remoteTaken)
-  }, [remoteTaken])
+  const takenKeys = useMemo(() => new Set(remoteTaken), [remoteTaken])
 
   useEffect(() => {
     if (slotId && takenKeys.has(`${date}|${slotId}`)) {
@@ -44,7 +43,7 @@ export function PrenotaPage() {
     }
   }, [date, slotId, takenKeys])
 
-  function pickSuggestion(s: { date: string; slotId: typeof TIME_SLOTS[number]['id'] }) {
+  function pickSuggestion(s: { date: string; slotId: (typeof TIME_SLOTS)[number]['id'] }) {
     setDate(s.date)
     setSlotId(s.slotId)
     setSuggestions([])
@@ -62,8 +61,12 @@ export function PrenotaPage() {
       setError(t('errEmailRequired'))
       return
     }
-    if (!contactName.trim()) {
+    if (!nome.trim() || !cognome.trim()) {
       setError(t('errName'))
+      return
+    }
+    if (!code || code.length < 2) {
+      setError(t('errCodeFromName'))
       return
     }
     if (takenKeys.has(`${date}|${slotId}`)) {
@@ -74,13 +77,12 @@ export function PrenotaPage() {
     }
 
     setBusy(true)
-    const participantCode = ensureCode()
     const booking = {
       bookingId: crypto.randomUUID(),
-      participantCode,
+      participantCode: code,
       date,
       slotId,
-      contactName: contactName.trim(),
+      contactName,
       email: email.trim(),
       phone: phone.trim(),
       note: note.trim(),
@@ -90,11 +92,11 @@ export function PrenotaPage() {
     try {
       await createBooking(booking)
       addLocalBooking(booking)
-      saveJson('participantCode', participantCode)
+      saveJson('participantCode', code)
       navigate('/grazie', {
         state: {
           kind: 'booking',
-          participantCode,
+          participantCode: code,
           date,
           slotLabel: TIME_SLOTS.find((s) => s.id === slotId)?.label,
         },
@@ -119,8 +121,37 @@ export function PrenotaPage() {
     <AppShell title={t('bookTitle')} subtitle={t('bookSub')}>
       <form className="stack form" onSubmit={onSubmit}>
         <label className="field">
+          <span>{t('nomeLabel')}</span>
+          <input
+            required
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            placeholder={t('nomePh')}
+            autoComplete="given-name"
+          />
+        </label>
+
+        <label className="field">
+          <span>{t('cognomeLabel')}</span>
+          <input
+            required
+            value={cognome}
+            onChange={(e) => setCognome(e.target.value)}
+            placeholder={t('cognomePh')}
+            autoComplete="family-name"
+          />
+        </label>
+
+        <label className="field">
           <span>{t('codeLabel')}</span>
-          <input value={code || '…'} readOnly className="readonly" />
+          <input
+            value={code || t('codeHint')}
+            readOnly
+            className="readonly"
+          />
+          <span className="body muted" style={{ marginTop: '0.35rem', display: 'block' }}>
+            {t('codeFromNameHint')}
+          </span>
         </label>
 
         <label className="field">
@@ -193,16 +224,6 @@ export function PrenotaPage() {
         )}
 
         <label className="field">
-          <span>{t('nameLabel')}</span>
-          <input
-            required
-            value={contactName}
-            onChange={(e) => setContactName(e.target.value)}
-            placeholder={t('namePh')}
-          />
-        </label>
-
-        <label className="field">
           <span>{t('emailLabel')} *</span>
           <input
             type="email"
@@ -230,7 +251,7 @@ export function PrenotaPage() {
 
         {error && <p className="error">{error}</p>}
 
-        <button className="btn btn-primary" type="submit" disabled={busy}>
+        <button className="btn btn-primary" type="submit" disabled={busy || !code}>
           {busy ? t('sending') : t('bookSubmit')}
         </button>
       </form>

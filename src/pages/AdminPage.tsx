@@ -8,6 +8,7 @@ import {
   formatDateLocale,
   formatDateShort,
   listAvailableDates,
+  normalizeIsoDate,
   TIME_SLOTS,
 } from '../data/slots'
 import './AdminPage.css'
@@ -83,26 +84,34 @@ export function AdminPage() {
   const dateLocale = lang === 'zh' ? 'zh-CN' : 'it-IT'
   const dates = useMemo(() => listAvailableDates(), [])
 
-  const pending = useMemo(
-    () => rows.filter((b) => b.status === 'pending' || b.status === 'unknown'),
-    [rows],
-  )
-  const approved = useMemo(
-    () => rows.filter((b) => b.status === 'approved' || b.status === 'done'),
-    [rows],
-  )
-
   const bySlot = useMemo(() => {
     const map = new Map<string, Row[]>()
     for (const b of rows) {
-      if (!b.date || !b.slotId || b.status === 'cancelled') continue
-      const key = `${b.date}|${b.slotId}`
+      const d = normalizeIsoDate(b.date)
+      const slot = String(b.slotId || '').trim()
+      if (!d || !slot || b.status === 'cancelled') continue
+      const key = `${d}|${slot}`
       const list = map.get(key) || []
-      list.push(b)
+      list.push({ ...b, date: d, slotId: slot })
       map.set(key, list)
     }
     return map
   }, [rows])
+
+  const pending = useMemo(
+    () =>
+      rows
+        .filter((b) => b.status === 'pending' || b.status === 'unknown')
+        .map((b) => ({ ...b, date: normalizeIsoDate(b.date), slotId: String(b.slotId || '').trim() })),
+    [rows],
+  )
+  const approved = useMemo(
+    () =>
+      rows
+        .filter((b) => b.status === 'approved' || b.status === 'done')
+        .map((b) => ({ ...b, date: normalizeIsoDate(b.date), slotId: String(b.slotId || '').trim() })),
+    [rows],
+  )
 
   async function refresh(pass: string) {
     const list = await adminListBookings(pass)
@@ -148,12 +157,21 @@ export function AdminPage() {
     }
   }
 
-  async function setStatus(code: string, status: 'approved' | 'pending' | 'cancelled') {
+  async function setStatus(
+    code: string,
+    status: 'approved' | 'pending' | 'cancelled',
+    extra?: { date?: string; slotId?: string; contactName?: string; email?: string },
+  ) {
     setBusy(true)
     setError('')
     setInfo('')
     try {
-      await adminSetStatus(password, code, status)
+      await adminSetStatus(password, code, status, {
+        date: extra?.date ? normalizeIsoDate(extra.date) : undefined,
+        slotId: extra?.slotId,
+        contactName: extra?.contactName,
+        email: extra?.email,
+      })
       setInfo(`${code} → ${status}`)
       await refresh(password)
     } catch (err) {
@@ -275,7 +293,7 @@ export function AdminPage() {
                         ) : (
                           cell.map((b) => (
                             <div
-                              key={b.participantCode}
+                              key={`${b.participantCode}-${b.date}-${b.slotId}-${b.status}`}
                               className={
                                 b.status === 'approved' || b.status === 'done'
                                   ? 'chip-approved'
@@ -314,9 +332,26 @@ export function AdminPage() {
                   dateLocale={dateLocale}
                   busy={busy}
                   t={t}
-                  onApprove={() => setStatus(b.participantCode, 'approved')}
-                  onRevoke={() => setStatus(b.participantCode, 'pending')}
-                  onCancel={() => setStatus(b.participantCode, 'cancelled')}
+                  onApprove={() =>
+                    setStatus(b.participantCode, 'approved', {
+                      date: b.date,
+                      slotId: b.slotId,
+                      contactName: b.contactName,
+                      email: b.email,
+                    })
+                  }
+                  onRevoke={() =>
+                    setStatus(b.participantCode, 'pending', {
+                      date: b.date,
+                      slotId: b.slotId,
+                    })
+                  }
+                  onCancel={() =>
+                    setStatus(b.participantCode, 'cancelled', {
+                      date: b.date,
+                      slotId: b.slotId,
+                    })
+                  }
                 />
               ))}
             </div>
@@ -334,9 +369,26 @@ export function AdminPage() {
                   dateLocale={dateLocale}
                   busy={busy}
                   t={t}
-                  onApprove={() => setStatus(b.participantCode, 'approved')}
-                  onRevoke={() => setStatus(b.participantCode, 'pending')}
-                  onCancel={() => setStatus(b.participantCode, 'cancelled')}
+                  onApprove={() =>
+                    setStatus(b.participantCode, 'approved', {
+                      date: b.date,
+                      slotId: b.slotId,
+                      contactName: b.contactName,
+                      email: b.email,
+                    })
+                  }
+                  onRevoke={() =>
+                    setStatus(b.participantCode, 'pending', {
+                      date: b.date,
+                      slotId: b.slotId,
+                    })
+                  }
+                  onCancel={() =>
+                    setStatus(b.participantCode, 'cancelled', {
+                      date: b.date,
+                      slotId: b.slotId,
+                    })
+                  }
                 />
               ))}
             </div>

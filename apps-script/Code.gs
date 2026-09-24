@@ -91,24 +91,28 @@ function doPost(e) {
       var codeA = String(data.participantCode || '').toUpperCase().trim()
       var status = data.status || 'approved'
       if (!codeA) return json_({ ok: false, error: 'missing_code' })
-      var updated = setBookingStatus_(codeA, status)
+      var updated = setBookingStatus_(codeA, status, data.date, data.slotId)
       if (!updated) {
-        // Manual approve: create the row if booking was never saved
+        // Only create a row for manual approve — never invent a cancel/revoke row
+        if (status === 'cancelled' || status === 'pending') {
+          return json_({ ok: false, error: 'not_found' })
+        }
         ensureBookingsHeader_()
         bookingsSheet_().appendRow([
           new Date(),
           data.bookingId || Utilities.getUuid(),
           codeA,
-          data.date || '',
-          data.slotId || '',
+          normalizeDate_(data.date || ''),
+          normalizeSlot_(data.slotId || ''),
           data.contactName || 'manual',
           data.email || '',
           data.phone || '',
           data.note || 'approved-from-admin',
           status,
         ])
+        return json_({ ok: true, status: status, created: true })
       }
-      return json_({ ok: true, status: status, created: !updated })
+      return json_({ ok: true, status: status, created: false })
     }
 
     if (type === 'ping') {
@@ -197,6 +201,20 @@ function ensureResponsesHeader_() {
   if (sheet.getLastRow() === 0) sheet.appendRow(responseHeader_())
 }
 
+function normalizeDate_(v) {
+  if (Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v.getTime())) {
+    return Utilities.formatDate(v, Session.getScriptTimeZone() || 'Europe/Rome', 'yyyy-MM-dd')
+  }
+  var s = String(v == null ? '' : v).trim()
+  var m = s.match(/(\d{4}-\d{2}-\d{2})/)
+  if (m) return m[1]
+  return s
+}
+
+function normalizeSlot_(v) {
+  return String(v == null ? '' : v).trim()
+}
+
 function listBookings_() {
   ensureBookingsHeader_()
   var sheet = bookingsSheet_()
@@ -208,14 +226,14 @@ function listBookings_() {
     out.push({
       timestamp: r[0],
       bookingId: r[1],
-      participantCode: String(r[2]).toUpperCase(),
-      date: String(r[3]),
-      slotId: String(r[4]),
+      participantCode: String(r[2]).toUpperCase().trim(),
+      date: normalizeDate_(r[3]),
+      slotId: normalizeSlot_(r[4]),
       contactName: r[5],
       email: r[6],
       phone: r[7],
       note: r[8],
-      status: String(r[9] || 'pending').toLowerCase(),
+      status: String(r[9] || 'pending').toLowerCase().trim(),
       row: i + 1,
     })
   }
@@ -242,15 +260,26 @@ function findBooking_(code) {
   return null
 }
 
-function setBookingStatus_(code, status) {
+/**
+ * Update status. Prefer matching code + date + slotId so duplicate name-codes
+ * (same person booking twice, or shared codes) update the correct row.
+ */
+function setBookingStatus_(code, status, date, slotId) {
   ensureBookingsHeader_()
   var sheet = bookingsSheet_()
   var values = sheet.getDataRange().getValues()
+  var wantDate = date ? normalizeDate_(date) : ''
+  var wantSlot = slotId ? normalizeSlot_(slotId) : ''
+  var codeU = String(code || '')
+    .toUpperCase()
+    .trim()
+
   for (var i = values.length - 1; i >= 1; i--) {
-    if (String(values[i][2]).toUpperCase() === code) {
-      sheet.getRange(i + 1, 10).setValue(status)
-      return true
-    }
+    if (String(values[i][2]).toUpperCase().trim() !== codeU) continue
+    if (wantDate && normalizeDate_(values[i][3]) !== wantDate) continue
+    if (wantSlot && normalizeSlot_(values[i][4]) !== wantSlot) continue
+    sheet.getRange(i + 1, 10).setValue(status)
+    return true
   }
   return false
 }

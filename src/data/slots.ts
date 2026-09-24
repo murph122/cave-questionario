@@ -46,7 +46,26 @@ export function formatDateShort(iso: string, locale: string = 'it-IT'): string {
   })
 }
 
-/** @deprecated use formatDateLocale */
-export function formatDateIt(iso: string): string {
-  return formatDateLocale(iso, 'it-IT')
+/** Normalize anything Sheets might return into YYYY-MM-DD. */
+export function normalizeIsoDate(value: unknown): string {
+  if (value == null || value === '') return ''
+  if (typeof value === 'string') {
+    const m = value.trim().match(/(\d{4}-\d{2}-\d{2})/)
+    if (m) return m[1]
+    const parsed = new Date(value)
+    if (!Number.isNaN(parsed.getTime())) {
+      const y = parsed.getFullYear()
+      const mo = String(parsed.getMonth() + 1).padStart(2, '0')
+      const d = String(parsed.getDate()).padStart(2, '0')
+      return `${y}-${mo}-${d}`
+    }
+    return value.trim()
+  }
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const y = value.getFullYear()
+    const mo = String(value.getMonth() + 1).padStart(2, '0')
+    const d = String(value.getDate()).padStart(2, '0')
+    return `${y}-${mo}-${d}`
+  }
+  return String(value)
 }
