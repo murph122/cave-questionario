@@ -11,7 +11,7 @@
       "maxDuration": 30
     },
     "api/slots.js": {
-      "maxDuration": 20
+      "maxDuration": 30
     }
   }
 }

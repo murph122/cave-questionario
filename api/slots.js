@@ -34,11 +34,13 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return json(res, 405, { error: 'Method not allowed' })
 
   const webhook = process.env.SHEETS_WEBHOOK_URL
-  if (!webhook) return json(res, 200, { taken: [], bookings: [] })
+  if (!webhook) {
+    return json(res, 503, { ok: false, error: 'SHEETS_WEBHOOK_URL missing' })
+  }
 
   try {
     const data = await listBookingsFromSheets(webhook)
-    const bookings = Array.isArray(data.bookings) ? data.bookings : []
+    const bookings = data.bookings
     const fromScript = Array.isArray(data.taken) ? data.taken : []
     const fromRows = takenFromBookings(bookings)
     // Prefer union so neither side can miss an approved slot
@@ -47,8 +49,8 @@ export default async function handler(req, res) {
       return `${normalizeDate(d)}|${String(s || '').trim()}`
     }).filter((k) => k.includes('|') && !k.startsWith('|') && !k.endsWith('|')))]
 
-    return json(res, 200, { taken, bookings })
+    return json(res, 200, { ok: true, taken, bookings })
   } catch (err) {
-    return json(res, 500, { error: err.message || 'Errore server', taken: [], bookings: [] })
+    return json(res, 500, { ok: false, error: err.message || 'Errore server' })
   }
 }

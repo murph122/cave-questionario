@@ -31,25 +31,30 @@ export function PrenotaPage() {
 
   useEffect(() => {
     let alive = true
+    let seq = 0
     function load() {
+      const id = ++seq
       fetchTakenSlots()
         .then((keys) => {
-          if (alive) setRemoteTaken(keys)
+          // Ignore stale responses; never wipe good data on failure.
+          if (alive && id === seq) setRemoteTaken(keys)
         })
         .catch(() => {
-          if (alive) setRemoteTaken([])
+          /* keep last successful remoteTaken */
         })
     }
     load()
     const onFocus = () => load()
-    window.addEventListener('focus', onFocus)
-    document.addEventListener('visibilitychange', () => {
+    const onVisibility = () => {
       if (document.visibilityState === 'visible') load()
-    })
+    }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
     const poll = window.setInterval(load, 20000)
     return () => {
       alive = false
       window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
       window.clearInterval(poll)
     }
   }, [])

@@ -34,7 +34,8 @@ function doGet(e) {
       })
     }
     if (action === 'listBookings') {
-      return json_({ ok: true, taken: takenKeys_(), bookings: listBookings_() })
+      var getList = listBookings_()
+      return json_({ ok: true, taken: takenFromList_(getList), bookings: getList })
     }
     if (action === 'getBooking') {
       var code = String((e.parameter && e.parameter.code) || '').toUpperCase().trim()
@@ -56,7 +57,8 @@ function doPost(e) {
 
     if (type === 'listBookings') {
       ensureBookingsHeader_()
-      return json_({ ok: true, taken: takenKeys_(), bookings: listBookings_() })
+      var postList = listBookings_()
+      return json_({ ok: true, taken: takenFromList_(postList), bookings: postList })
     }
 
     if (type === 'booking') {
@@ -294,9 +296,9 @@ function listBookings_() {
   return out
 }
 
-function takenKeys_() {
+function takenFromList_(list) {
   // Only approved (or completed) bookings lock the slot for others.
-  return listBookings_()
+  return (list || [])
     .filter(function (b) {
       return (
         (b.status === 'approved' || b.status === 'done') &&
@@ -307,6 +309,10 @@ function takenKeys_() {
     .map(function (b) {
       return b.date + '|' + b.slotId
     })
+}
+
+function takenKeys_() {
+  return takenFromList_(listBookings_())
 }
 
 /** Write YYYY-MM-DD as local noon Date so Sheets keeps the correct calendar day. */

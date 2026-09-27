@@ -1,14 +1,14 @@
 import type { Plugin } from 'vite'
 import { loadEnv } from 'vite'
 // @ts-expect-error JS helper shared with Vercel API routes
-import { getSheets, postSheets } from './lib/sheetsClient.js'
+import { postSheets } from './lib/sheetsClient.js'
 
 async function listBookings(webhook: string) {
-  try {
-    return await postSheets(webhook, { type: 'listBookings' })
-  } catch {
-    return getSheets(webhook, 'action=listBookings')
+  const data = await postSheets(webhook, { type: 'listBookings' }, 18000)
+  if (!data || !Array.isArray(data.bookings)) {
+    throw new Error('Invalid listBookings response (expected bookings array)')
   }
+  return data
 }
 
 export function sheetsWebhookApi(mode: string, cwd: string): Plugin {

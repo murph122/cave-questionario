@@ -174,19 +174,37 @@ export function AdminPage() {
   )
 
   async function refresh(pass: string) {
-    const list = await adminListBookings(pass)
-    setRows(list as Row[])
     try {
-      const ping = await adminPing(pass)
-      setHealth(
-        ping.bookingsSheet || ping.sheet
-          ? `${t('adminHealthOk')} · ${ping.bookingsSheet || ping.sheet} · ${ping.bookings ?? list.length} bookings`
-          : t('adminHealthOk'),
-      )
+      const list = await adminListBookings(pass)
+      setRows(list as Row[])
+      try {
+        const ping = await adminPing(pass)
+        const sheetLabel = ping.bookingsSheet || ping.sheet
+        if (
+          list.length === 0 &&
+          typeof ping.bookings === 'number' &&
+          ping.bookings > 0
+        ) {
+          setHealth(
+            `${t('adminHealthFail')}: list empty but sheet reports ${ping.bookings} bookings` +
+              (sheetLabel ? ` · ${sheetLabel}` : ''),
+          )
+        } else {
+          setHealth(
+            sheetLabel
+              ? `${t('adminHealthOk')} · ${sheetLabel} · ${ping.bookings ?? list.length} bookings`
+              : t('adminHealthOk'),
+          )
+        }
+      } catch (err) {
+        setHealth(
+          `${t('adminHealthFail')}: ${err instanceof Error ? err.message : 'error'}`,
+        )
+      }
     } catch (err) {
-      setHealth(
-        `${t('adminHealthFail')}: ${err instanceof Error ? err.message : 'error'}`,
-      )
+      // Keep previous rows on failure so the UI does not flash empty.
+      setError(err instanceof Error ? err.message : t('adminLoadFail'))
+      throw err
     }
   }
 

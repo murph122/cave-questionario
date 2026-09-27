@@ -82,19 +82,28 @@ export async function createBooking(payload: BookPayload) {
 }
 
 export async function fetchTakenSlots(): Promise<string[]> {
+  const controller = new AbortController()
+  const timer = window.setTimeout(() => controller.abort(), 25000)
   try {
-    const controller = new AbortController()
-    const timer = window.setTimeout(() => controller.abort(), 20000)
-    const res = await fetch('/api/slots', { signal: controller.signal })
-    window.clearTimeout(timer)
+    const res = await fetch('/api/slots', { signal: controller.signal, cache: 'no-store' })
     const contentType = res.headers.get('content-type') || ''
-    if (!res.ok || !contentType.includes('application/json')) return []
+    if (!contentType.includes('application/json')) {
+      throw new Error('API non disponibile')
+    }
     const data = (await res.json()) as {
+      ok?: boolean
+      error?: string
       taken?: string[]
       bookings?: Array<{ date?: string; slotId?: string; status?: string }>
     }
-    const fromTaken = data.taken || []
-    const fromBookings = (data.bookings || [])
+    if (!res.ok || data.ok === false) {
+      throw new Error(data.error || `Errore ${res.status}`)
+    }
+    if (!Array.isArray(data.taken) && !Array.isArray(data.bookings)) {
+      throw new Error('Risposta slots non valida')
+    }
+    const fromTaken = Array.isArray(data.taken) ? data.taken : []
+    const fromBookings = (Array.isArray(data.bookings) ? data.bookings : [])
       .filter((b) => {
         const s = String(b.status || '').toLowerCase()
         return s === 'approved' || s === 'done'
@@ -106,8 +115,14 @@ export async function fetchTakenSlots(): Promise<string[]> {
       })
       .filter(Boolean)
     return [...new Set([...fromTaken, ...fromBookings])]
-  } catch {
-    return []
+  } catch (err) {
+    const name = err instanceof Error ? err.name : ''
+    if (name === 'AbortError' || (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError')) {
+      throw new Error('TIMEOUT')
+    }
+    throw err
+  } finally {
+    window.clearTimeout(timer)
   }
 }
 
@@ -135,9 +150,14 @@ export async function adminListBookings(password: string) {
   return postJsonWithTimeout<{ ok?: boolean; bookings?: BookingInfo[]; error?: string }>(
     '/api/admin',
     { action: 'list', password },
-    20000,
+    25000,
     { 'X-Admin-Password': password },
-  ).then((data) => data.bookings || [])
+  ).then((data) => {
+    if (!Array.isArray(data.bookings)) {
+      throw new Error(data.error || 'Lista prenotazioni non valida')
+    }
+    return data.bookings
+  })
 }
 
 export async function adminSetStatus(
