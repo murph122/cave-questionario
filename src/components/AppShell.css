@@ -3,9 +3,11 @@
   position: relative;
   color: var(--ink);
   isolation: isolate;
+  display: flex;
+  flex-direction: column;
 }
 
-.shell > *:not(.shell-bg):not(.tech-fx):not(.cosmic) {
+.shell > *:not(.shell-bg):not(.tech-fx):not(.cosmic):not(.top-right-bar) {
   position: relative;
   z-index: 1;
 }
@@ -119,21 +121,46 @@
   border-bottom: 1px solid var(--panel-border);
 }
 
-.shell-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.9rem 1.25rem;
-  max-width: 760px;
-  margin: 0 auto;
-}
-
-.lang-float {
+.top-right-bar {
   position: fixed;
   top: 12px;
   right: 12px;
   z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.55rem;
+}
+
+.brand-logos {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  text-decoration: none;
+  line-height: 0;
+  padding: 0.4rem 0.65rem;
+  background: rgba(2, 10, 18, 0.55);
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  backdrop-filter: blur(10px);
+}
+
+.brand-logo {
+  display: block;
+  width: auto;
+  object-fit: contain;
+  background: transparent;
+}
+
+/* Match apparent type size: 3D LAB is two lines, CIM is one line */
+.brand-logo-3d {
+  height: 52px;
+}
+
+.brand-logo-cim {
+  height: 26px;
+}
+
+.lang-float-inline {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -152,22 +179,23 @@
   text-transform: uppercase;
 }
 
-.brand {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.1rem;
-  letter-spacing: 0.04em;
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.brand:hover {
-  color: var(--accent);
+.shell-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem;
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 .shell-nav {
   display: flex;
   gap: 1.1rem;
+}
+
+.shell-nav-alone {
+  margin-right: 0;
 }
 
 .shell-nav a {
@@ -242,8 +270,10 @@
 
 .shell-main {
   max-width: 760px;
+  width: 100%;
   margin: 0 auto;
-  padding: 1.75rem 1.25rem 3.5rem;
+  padding: 1.75rem 1.25rem 2.5rem;
+  flex: 1;
 }
 
 .panel {
@@ -313,11 +343,63 @@
   }
 }
 
+.site-footer {
+  margin-top: auto;
+  padding: 1.75rem 1.25rem 2.25rem;
+  text-align: center;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--muted);
+  border-top: 1px solid var(--panel-border);
+  background: color-mix(in srgb, var(--bg-deep) 72%, transparent);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer-lab {
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.2rem !important;
+}
+
+.site-footer-email-label {
+  margin-top: 0.65rem !important;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--muted) 85%, var(--accent));
+}
+
+.site-footer a {
+  color: #7dd3fc;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.35);
+}
+
+.site-footer a:hover {
+  color: #bae6fd;
+  border-bottom-color: rgba(186, 230, 253, 0.7);
+}
+
 @media (max-width: 640px) {
-  .lang-float {
-    top: auto;
-    bottom: 12px;
-    right: 12px;
+  .top-right-bar {
+    top: 8px;
+    right: 8px;
+    max-width: calc(100vw - 16px);
+  }
+
+  .brand-logo-3d {
+    height: 42px;
+  }
+
+  .brand-logo-cim {
+    height: 22px;
+  }
+
+  .lang-float-inline {
+    padding: 8px 10px;
   }
 
   .panel-title {
@@ -326,5 +408,9 @@
 
   .shell-main {
     padding-top: 1.25rem;
+  }
+
+  .shell-header-wrap {
+    padding-right: 0;
   }
 }

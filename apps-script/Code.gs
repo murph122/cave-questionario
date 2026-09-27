@@ -439,7 +439,7 @@ function sendBookingEmail_(data) {
     (siteUrl ? ':\n' + siteUrl.replace(/\/$/, '') + '/accedi\n' : '.\n') +
     '\n' +
     'Conserva questa email.\n\n' +
-    '— CAVE Lab\n'
+    '— 3D LAB · CIM4.0\n'
 
   try {
     MailApp.sendEmail({

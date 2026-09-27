@@ -19,7 +19,6 @@ type Props = {
   title?: string
   subtitle?: string
   progress?: number
-  /** Full-bleed cinematic home (no opaque card title chrome). */
   hero?: boolean
 }
 
@@ -53,17 +52,21 @@ export function AppShell({ children, title, subtitle, progress, hero }: Props) {
       {isHomeHero ? <CosmicParallax /> : <div className="shell-bg" aria-hidden />}
       {!isHomeHero && <TechFx />}
 
-      <div className="lang-float">
-        <span className="lang-float-label">Lingua / 语言</span>
-        <LanguageSwitcher />
+      <div className="top-right-bar">
+        <Link to="/" className="brand-logos" aria-label="3D LAB · CIM4.0">
+          <img src="/brand/3d-lab.png" alt="3D LAB" className="brand-logo brand-logo-3d" />
+          <img src="/brand/cim40.png" alt="CIM4.0" className="brand-logo brand-logo-cim" />
+        </Link>
+        <div className="lang-float-inline">
+          <span className="lang-float-label">Lingua / 语言</span>
+          <LanguageSwitcher />
+        </div>
       </div>
 
       <div className="shell-header-wrap">
         <header className="shell-header">
-          <Link to="/" className="brand">
-            {t('brand')}
-          </Link>
-          <nav className="shell-nav">
+          <nav className="shell-nav shell-nav-alone">
+            <Link to="/">{t('brand')}</Link>
             <Link to="/prenota">{t('navBook')}</Link>
             <Link to="/qr">{t('navQr')}</Link>
           </nav>
@@ -94,6 +97,18 @@ export function AppShell({ children, title, subtitle, progress, hero }: Props) {
           {children}
         </div>
       </main>
+
+      <footer className="site-footer">
+        <p className="site-footer-lab">{t('labName')}</p>
+        <p>{t('labAddress')}</p>
+        <p className="site-footer-email-label">{t('labEmailLabel')}</p>
+        <p>
+          <a href={`mailto:${t('labEmail')}`}>{t('labEmail')}</a>
+        </p>
+        <p>
+          <a href={`mailto:${t('labEmailCim')}`}>{t('labEmailCim')}</a>
+        </p>
+      </footer>
     </div>
   )
 }

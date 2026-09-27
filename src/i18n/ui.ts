@@ -1,7 +1,15 @@
 import type { Lang } from './types'
 
 export const ui = {
-  brand: { it: 'CAVE Lab', zh: 'CAVE Lab' },
+  brand: { it: '3D LAB', zh: '3D LAB' },
+  labName: { it: '3D LAB & CIM4.0', zh: '3D LAB & CIM4.0' },
+  labAddress: {
+    it: 'Corso Settembrini 178, 10135 Torino (TO)',
+    zh: 'Corso Settembrini 178, 10135 Torino (TO)',
+  },
+  labEmailLabel: { it: 'Email', zh: 'Email' },
+  labEmail: { it: '3dlab@plm.polito.it', zh: '3dlab@plm.polito.it' },
+  labEmailCim: { it: 'info@cim40.com', zh: 'info@cim40.com' },
   navBook: { it: 'Prenota', zh: '预约' },
   navQr: { it: 'QR', zh: '二维码' },
   langIt: { it: 'Italiano', zh: 'Italiano' },
@@ -13,12 +21,12 @@ export const ui = {
     zh: '走进 CAVE，开启一场奇妙探索。',
   },
   welcomeSub: {
-    it: 'Laboratorio di realtà virtuale immersiva.',
-    zh: '沉浸式虚拟现实实验室。',
+    it: 'Esperimento immersivo di realtà virtuale.',
+    zh: '沉浸式虚拟现实实验。',
   },
   welcomeBody: {
-    it: 'Nello spazio virtuale a 360°, vivi immagini e interazioni immersive. Benvenuto nel laboratorio CAVE: esplora in prima persona come la realtà virtuale cambia il modo in cui percepiamo il mondo.',
-    zh: '在环绕式虚拟空间中，感受沉浸式影像与互动体验。欢迎来到 CAVE 实验室，亲自探索虚拟现实如何改变我们感知世界的方式。',
+    it: 'Nello spazio virtuale a 360°, vivi immagini e interazioni immersive. Benvenuti a partecipare al nostro esperimento CAVE: esplora in prima persona come la realtà virtuale cambia il modo in cui percepiamo il mondo.',
+    zh: '在环绕式虚拟空间中，感受沉浸式影像与互动体验。欢迎参加我们的 cave 实验，亲自探索虚拟现实如何改变我们感知世界的方式。',
   },
   welcomeConsent: {
     it: 'Continuando dichiari di partecipare volontariamente. I dati di prenotazione sono usati solo per organizzare l’esperienza.',

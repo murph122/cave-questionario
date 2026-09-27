@@ -9,7 +9,6 @@ export function WelcomePage() {
   return (
     <AppShell hero>
       <div className="welcome-hero stack">
-        <p className="welcome-brand-mark">{t('brand')}</p>
         <h1 className="welcome-title">{t('welcomeTitle')}</h1>
         <p className="welcome-lead">{t('welcomeBody')}</p>
         <p className="welcome-consent body muted">{t('welcomeConsent')}</p>
