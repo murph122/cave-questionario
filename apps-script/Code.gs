@@ -116,12 +116,7 @@ function doPost(e) {
         data.note || '',
         'pending',
       ])
-      return json_({ ok: true, status: 'pending', emailSent: false, emailDeferred: true })
-    }
-
-    if (type === 'sendBookingEmail') {
-      var mailResult = sendBookingEmail_(data)
-      return json_({ ok: true, emailSent: mailResult.sent, emailError: mailResult.error || null })
+      return json_({ ok: true, status: 'pending' })
     }
 
     if (type === 'approve') {
@@ -401,62 +396,6 @@ function rescheduleBooking_(code, oldDate, oldSlot, newDate, newSlot) {
   sheet.getRange(rowIndex, 4).setValue(dateForSheet_(newDate))
   sheet.getRange(rowIndex, 5).setValue(newSlot)
   return true
-}
-
-/** Edit this address shown in confirmation emails. */
-var LAB_LOCATION = 'Laboratorio CAVE / 3D Lab — Politecnico (aggiorna indirizzo in Code.gs)'
-
-var SLOT_LABELS = {
-  S1: '09:45 – 11:15',
-  S2: '11:15 – 12:45',
-  S3: '14:00 – 15:30',
-  S4: '15:30 – 17:00',
-}
-
-function sendBookingEmail_(data) {
-  var to = String(data.email || '').trim()
-  if (!to || to.indexOf('@') === -1) {
-    return { sent: false, error: 'no_email' }
-  }
-  var code = String(data.participantCode || '').toUpperCase()
-  var slot = SLOT_LABELS[data.slotId] || data.slotId || ''
-  var location = data.location || LAB_LOCATION
-  var siteUrl = data.siteUrl || ''
-  var subject = 'Conferma prenotazione CAVE — ' + code
-  var body =
-    'Ciao ' +
-    (data.contactName || '') +
-    ',\n\n' +
-    'La tua prenotazione per l’esperimento CAVE è stata registrata.\n\n' +
-    '• Codice univoco: ' +
-    code +
-    '\n' +
-    '• Data: ' +
-    (data.date || '') +
-    '\n' +
-    '• Orario: ' +
-    slot +
-    '\n' +
-    '• Luogo: ' +
-    location +
-    '\n\n' +
-    'Stato: in attesa di approvazione dello sperimentatore.\n' +
-    'Quando sarà approvata, entra nel questionario con il codice sopra' +
-    (siteUrl ? ':\n' + siteUrl.replace(/\/$/, '') + '/accedi\n' : '.\n') +
-    '\n' +
-    'Conserva questa email.\n\n' +
-    '— 3D LAB · CIM4.0\n'
-
-  try {
-    MailApp.sendEmail({
-      to: to,
-      subject: subject,
-      body: body,
-    })
-    return { sent: true }
-  } catch (err) {
-    return { sent: false, error: String(err) }
-  }
 }
 
 function responseHeader_() {

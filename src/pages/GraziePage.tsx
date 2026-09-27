@@ -32,7 +32,6 @@ export function GraziePage() {
           </p>
         )}
         <p className="body muted">{t('thanksBookWait')}</p>
-        <p className="body muted">{t('thanksBookEmail')}</p>
         <div className="cta-row">
           <Link className="btn btn-primary" to="/">
             {t('backHome')}

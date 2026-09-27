@@ -24,35 +24,23 @@ export default async function handler(req, res) {
       return json(res, 400, { error: 'Serve email o telefono.' })
     }
 
-    const siteUrl =
-      body.siteUrl ||
-      process.env.VITE_PUBLIC_SITE_URL ||
-      process.env.PUBLIC_SITE_URL ||
-      'https://cave-questionario.vercel.app'
-    const location =
-      body.location ||
-      process.env.LAB_LOCATION ||
-      'Laboratorio CAVE / 3D Lab'
-
     const payload = {
       type: 'booking',
       ...body,
-      siteUrl,
-      location,
+      siteUrl:
+        body.siteUrl ||
+        process.env.VITE_PUBLIC_SITE_URL ||
+        process.env.PUBLIC_SITE_URL ||
+        'https://cave-questionario.vercel.app',
+      location: body.location || process.env.LAB_LOCATION || 'Laboratorio CAVE / 3D Lab',
       status: 'pending',
     }
 
-    // Write booking only — respond ASAP so the browser does not abort
     const result = await postSheets(webhook, payload, 25000)
-
-    // Fire-and-forget email (do not block JSON response)
-    postSheets(webhook, { type: 'sendBookingEmail', ...payload }, 15000).catch(() => {})
 
     return json(res, 200, {
       ok: true,
       status: 'pending',
-      emailSent: false,
-      emailDeferred: true,
       ...result,
     })
   } catch (err) {

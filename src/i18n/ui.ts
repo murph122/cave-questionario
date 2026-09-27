@@ -91,12 +91,12 @@ export const ui = {
   },
   errGeneric: { it: 'Invio non riuscito.', zh: '提交失败。' },
   errTimeout: {
-    it: 'La richiesta ha impiegato troppo tempo. Non riprovare subito: controlla la mail o chiedi allo sperimentatore se la prenotazione è già registrata.',
-    zh: '请求超时。请先不要马上再点一次：先查邮箱，或问管理员预约是否已经写入。',
+    it: 'La richiesta ha impiegato troppo tempo. Non riprovare subito: chiedi allo sperimentatore se la prenotazione è già registrata.',
+    zh: '请求超时。请先不要马上再点一次：先问管理员预约是否已经写入。',
   },
   errEmailRequired: {
-    it: 'Inserisci un’email valida: ci invieremo conferma con codice, data e luogo.',
-    zh: '请填写有效邮箱：系统会发送含代码、时间与地点的确认邮件。',
+    it: 'Inserisci un’email di contatto valida.',
+    zh: '请填写有效的联系邮箱。',
   },
 
   adminTitle: { it: 'Admin — Prenotazioni', zh: '管理 — 预约' },
@@ -192,10 +192,6 @@ export const ui = {
   thanksBookWait: {
     it: 'Conserva il codice. Lo sperimentatore confermerà la prenotazione.',
     zh: '请保存代码。实验者会确认你的预约。',
-  },
-  thanksBookEmail: {
-    it: 'Ti abbiamo inviato un’email di conferma (controlla anche lo spam).',
-    zh: '确认邮件已发送（请同时查看垃圾箱）。',
   },
   thanksCode: { it: 'Codice:', zh: '代码：' },
   thanksAppt: { it: 'Appuntamento:', zh: '预约时间：' },

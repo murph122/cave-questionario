@@ -69,7 +69,7 @@ export async function createBooking(payload: BookPayload) {
     (typeof window !== 'undefined'
       ? import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin
       : '')
-  return postJsonWithTimeout<{ ok: boolean; status?: string; taken?: string[]; emailSent?: boolean }>(
+  return postJsonWithTimeout<{ ok: boolean; status?: string; taken?: string[] }>(
     '/api/book',
     {
       ...payload,

@@ -74,12 +74,6 @@ export function sheetsWebhookApi(mode: string, cwd: string): Plugin {
               siteUrl: body.siteUrl || siteUrl,
               location: body.location || labLocation,
             })
-            void postSheets(webhook, {
-              type: 'sendBookingEmail',
-              ...body,
-              siteUrl: body.siteUrl || siteUrl,
-              location: body.location || labLocation,
-            }).catch(() => undefined)
             return send(res, 200, { ok: true, status: 'pending', ...result })
           }
 
