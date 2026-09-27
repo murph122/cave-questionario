@@ -407,10 +407,10 @@ function rescheduleBooking_(code, oldDate, oldSlot, newDate, newSlot) {
 var LAB_LOCATION = 'Laboratorio CAVE / 3D Lab — Politecnico (aggiorna indirizzo in Code.gs)'
 
 var SLOT_LABELS = {
-  S1: '10:00 – 11:30',
-  S2: '13:00 – 14:30',
-  S3: '14:30 – 16:00',
-  S4: '16:00 – 17:30',
+  S1: '09:45 – 11:15',
+  S2: '11:15 – 12:45',
+  S3: '14:00 – 15:30',
+  S4: '15:30 – 17:00',
 }
 
 function sendBookingEmail_(data) {

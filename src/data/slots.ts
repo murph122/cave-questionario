@@ -3,10 +3,10 @@ export const BOOKING_END = '2026-10-09'
 
 /** Four lab sessions per working day. */
 export const TIME_SLOTS = [
-  { id: 'S1', label: '10:00 – 11:30' },
-  { id: 'S2', label: '13:00 – 14:30' },
-  { id: 'S3', label: '14:30 – 16:00' },
-  { id: 'S4', label: '16:00 – 17:30' },
+  { id: 'S1', label: '09:45 – 11:15' },
+  { id: 'S2', label: '11:15 – 12:45' },
+  { id: 'S3', label: '14:00 – 15:30' },
+  { id: 'S4', label: '15:30 – 17:00' },
 ] as const
 
 export type SlotId = (typeof TIME_SLOTS)[number]['id']
