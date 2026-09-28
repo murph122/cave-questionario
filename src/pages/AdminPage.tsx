@@ -10,9 +10,13 @@ import {
 } from '../lib/api'
 import { useLang } from '../i18n/LangContext'
 import type { UiKey } from '../i18n/ui'
+import { codeFromName } from '../lib/participantCode'
 import {
   formatDateLocale,
   formatDateShort,
+  isBookingPast,
+  isDayPast,
+  isSlotPast,
   listAvailableDates,
   normalizeIsoDate,
   TIME_SLOTS,
@@ -131,6 +135,48 @@ function BookingCard({
   )
 }
 
+function PastBookingRow({
+  b,
+  dateLocale,
+  busy,
+  expanded,
+  onToggle,
+  onCancel,
+  t,
+}: {
+  b: Row
+  dateLocale: string
+  busy: boolean
+  expanded: boolean
+  onToggle: () => void
+  onCancel: () => void
+  t: (k: UiKey) => string
+}) {
+  const slot = TIME_SLOTS.find((s) => s.id === b.slotId)?.label || b.slotId || '—'
+  return (
+    <div className={`admin-past-row${expanded ? ' open' : ''}`}>
+      <button type="button" className="admin-past-summary" onClick={onToggle}>
+        <span className="admin-past-main">
+          <strong>{b.participantCode}</strong>
+          {b.contactName ? ` · ${b.contactName}` : ''}
+        </span>
+        <span className="admin-past-meta">
+          {b.date ? formatDateShort(b.date, dateLocale) : '—'} · {slot}
+        </span>
+        <span className="admin-past-toggle">{expanded ? t('adminHidePast') : t('adminShowPast')}</span>
+      </button>
+      {expanded && (
+        <div className="admin-past-detail">
+          <p className="body muted">{b.email || b.phone || '—'}</p>
+          <button type="button" className="btn btn-ghost" disabled={busy} onClick={onCancel}>
+            {t('adminCancel')}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function AdminPage() {
   const { lang, t } = useLang()
   const [password, setPassword] = useState(() => sessionStorage.getItem(SESSION_KEY) || '')
@@ -139,10 +185,22 @@ export function AdminPage() {
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
-  const [manualCode, setManualCode] = useState('')
   const [health, setHealth] = useState('')
+  const [manualName, setManualName] = useState('')
+  const [manualCode, setManualCode] = useState('')
+  const [manualDate, setManualDate] = useState('')
+  const [manualSlot, setManualSlot] = useState<string>(TIME_SLOTS[0]?.id || '')
+  const [manualEmail, setManualEmail] = useState('')
+  const [manualPhone, setManualPhone] = useState('')
+  const [codeTouched, setCodeTouched] = useState(false)
+  const [expandedPastDays, setExpandedPastDays] = useState<Set<string>>(() => new Set())
+  const [expandedPastCards, setExpandedPastCards] = useState<Set<string>>(() => new Set())
   const dateLocale = lang === 'zh' ? 'zh-CN' : 'it-IT'
   const dates = useMemo(() => listAvailableDates(), [])
+
+  useEffect(() => {
+    if (!manualDate && dates[0]) setManualDate(dates[0])
+  }, [dates, manualDate])
 
   const bySlot = useMemo(() => {
     const map = new Map<string, Row[]>()
@@ -158,18 +216,36 @@ export function AdminPage() {
     return map
   }, [rows])
 
-  const pending = useMemo(
+  const pendingActive = useMemo(
     () =>
       rows
         .filter((b) => b.status === 'pending' || b.status === 'unknown')
-        .map((b) => ({ ...b, date: normalizeIsoDate(b.date), slotId: String(b.slotId || '').trim() })),
+        .map((b) => ({ ...b, date: normalizeIsoDate(b.date), slotId: String(b.slotId || '').trim() }))
+        .filter((b) => !isBookingPast(b.date, b.slotId)),
     [rows],
   )
-  const approved = useMemo(
+  const pendingPast = useMemo(
+    () =>
+      rows
+        .filter((b) => b.status === 'pending' || b.status === 'unknown')
+        .map((b) => ({ ...b, date: normalizeIsoDate(b.date), slotId: String(b.slotId || '').trim() }))
+        .filter((b) => isBookingPast(b.date, b.slotId)),
+    [rows],
+  )
+  const approvedActive = useMemo(
     () =>
       rows
         .filter((b) => b.status === 'approved' || b.status === 'done')
-        .map((b) => ({ ...b, date: normalizeIsoDate(b.date), slotId: String(b.slotId || '').trim() })),
+        .map((b) => ({ ...b, date: normalizeIsoDate(b.date), slotId: String(b.slotId || '').trim() }))
+        .filter((b) => !isBookingPast(b.date, b.slotId)),
+    [rows],
+  )
+  const approvedPast = useMemo(
+    () =>
+      rows
+        .filter((b) => b.status === 'approved' || b.status === 'done')
+        .map((b) => ({ ...b, date: normalizeIsoDate(b.date), slotId: String(b.slotId || '').trim() }))
+        .filter((b) => isBookingPast(b.date, b.slotId)),
     [rows],
   )
 
@@ -202,7 +278,6 @@ export function AdminPage() {
         )
       }
     } catch (err) {
-      // Keep previous rows on failure so the UI does not flash empty.
       setError(err instanceof Error ? err.message : t('adminLoadFail'))
       throw err
     }
@@ -238,11 +313,17 @@ export function AdminPage() {
   async function setStatus(
     code: string,
     status: 'approved' | 'pending' | 'cancelled',
-    extra?: { date?: string; slotId?: string; contactName?: string; email?: string },
-  ) {
+    extra?: {
+      date?: string
+      slotId?: string
+      contactName?: string
+      email?: string
+      phone?: string
+    },
+  ): Promise<boolean> {
     if (status === 'cancelled') {
       const ok = window.confirm(t('adminCancelConfirm'))
-      if (!ok) return
+      if (!ok) return false
     }
     setBusy(true)
     setError('')
@@ -253,11 +334,15 @@ export function AdminPage() {
         slotId: extra?.slotId,
         contactName: extra?.contactName,
         email: extra?.email,
+        phone: extra?.phone,
       })
       setInfo(status === 'cancelled' ? `${code} — ${t('adminDeleted')}` : `${code} → ${status}`)
       await refresh(password)
+      return true
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('errGeneric'))
+      const msg = err instanceof Error ? err.message : t('errGeneric')
+      setError(msg === 'date_and_slot_required' ? t('adminManualNeedSlot') : msg)
+      return false
     } finally {
       setBusy(false)
     }
@@ -284,15 +369,48 @@ export function AdminPage() {
     }
   }
 
-  async function approveManual(e: FormEvent) {
+  function onManualNameChange(value: string) {
+    setManualName(value)
+    if (codeTouched) return
+    const parts = value.trim().split(/\s+/)
+    const nome = parts[0] || ''
+    const cognome = parts.slice(1).join(' ') || ''
+    const suggested = codeFromName(nome, cognome)
+    if (suggested) setManualCode(suggested)
+  }
+
+  async function addManual(e: FormEvent) {
     e.preventDefault()
     const code = manualCode.trim().toUpperCase()
+    const date = normalizeIsoDate(manualDate)
+    const slotId = String(manualSlot || '').trim()
     if (code.length < 2) {
       setError(t('errCode'))
       return
     }
-    await setStatus(code, 'approved')
+    if (!date || !slotId) {
+      setError(t('adminManualNeedSlot'))
+      return
+    }
+    const cell = bySlot.get(`${date}|${slotId}`) || []
+    if (cell.some((b) => b.status === 'approved' || b.status === 'done')) {
+      setError(t('adminManualSlotTaken'))
+      return
+    }
+    const ok = await setStatus(code, 'approved', {
+      date,
+      slotId,
+      contactName: manualName.trim() || undefined,
+      email: manualEmail.trim() || undefined,
+      phone: manualPhone.trim() || undefined,
+    })
+    if (!ok) return
+    setInfo(`${code} — ${t('adminManualCreated')}`)
+    setManualName('')
     setManualCode('')
+    setManualEmail('')
+    setManualPhone('')
+    setCodeTouched(false)
   }
 
   if (!authed) {
@@ -346,6 +464,134 @@ export function AdminPage() {
     }
   }
 
+  function togglePastDay(d: string) {
+    setExpandedPastDays((prev) => {
+      const next = new Set(prev)
+      if (next.has(d)) next.delete(d)
+      else next.add(d)
+      return next
+    })
+  }
+
+  function pastCardKey(b: Row) {
+    return `${b.participantCode}|${b.date}|${b.slotId}|${b.status}`
+  }
+
+  function togglePastCard(key: string) {
+    setExpandedPastCards((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function dayBookingCount(d: string) {
+    let n = 0
+    for (const s of TIME_SLOTS) {
+      n += (bySlot.get(`${d}|${s.id}`) || []).length
+    }
+    return n
+  }
+
+  function renderScheduleCells(d: string) {
+    return TIME_SLOTS.map((s) => {
+      const cell = bySlot.get(`${d}|${s.id}`) || []
+      const past = isSlotPast(d, s.id)
+      const hasApproved = cell.some((b) => b.status === 'approved' || b.status === 'done')
+      return (
+        <td
+          key={s.id}
+          className={[
+            hasApproved ? 'cell-approved' : cell.length ? 'cell-pending' : 'cell-free',
+            past ? 'cell-past' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {cell.length === 0 ? (
+            <span className="cell-empty">{t('adminSlotFree')}</span>
+          ) : past ? (
+            <span className="chip-past-compact">
+              {cell
+                .map((b) => b.contactName || b.participantCode)
+                .join(', ')}
+            </span>
+          ) : (
+            cell.map((b) => (
+              <div
+                key={`${b.participantCode}-${b.date}-${b.slotId}-${b.status}`}
+                className={
+                  b.status === 'approved' || b.status === 'done'
+                    ? 'chip-approved'
+                    : 'chip-pending'
+                }
+                title={`${b.participantCode} · ${b.status}`}
+              >
+                <strong>{b.contactName || b.participantCode}</strong>
+                <span>
+                  {b.participantCode}
+                  {b.status === 'pending' ? ` · ${t('adminSlotPending')}` : ''}
+                </span>
+              </div>
+            ))
+          )}
+        </td>
+      )
+    })
+  }
+
+  function renderColumn(
+    title: string,
+    active: Row[],
+    past: Row[],
+  ) {
+    return (
+      <section className="admin-col">
+        <h2 className="admin-section-title">
+          {title} ({active.length}
+          {past.length ? ` + ${past.length}` : ''})
+        </h2>
+        <div className="admin-list">
+          {active.length === 0 && past.length === 0 && (
+            <p className="body muted">{t('adminNoneInCol')}</p>
+          )}
+          {active.map((b) => (
+            <BookingCard
+              key={`a-${b.participantCode}-${b.date}-${b.slotId}`}
+              {...cardProps(b)}
+            />
+          ))}
+          {past.length > 0 && (
+            <div className="admin-past-block">
+              <p className="admin-past-heading">{t('adminPastSection')}</p>
+              {past.map((b) => {
+                const key = pastCardKey(b)
+                return (
+                  <PastBookingRow
+                    key={key}
+                    b={b}
+                    dateLocale={dateLocale}
+                    busy={busy}
+                    expanded={expandedPastCards.has(key)}
+                    onToggle={() => togglePastCard(key)}
+                    onCancel={() =>
+                      setStatus(b.participantCode, 'cancelled', {
+                        date: b.date,
+                        slotId: b.slotId,
+                      })
+                    }
+                    t={t}
+                  />
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
   return (
     <AppShell title={t('adminTitle')} subtitle={t('adminListSub')}>
       <div className="stack">
@@ -357,18 +603,78 @@ export function AdminPage() {
           </p>
         )}
 
-        <form className="stack form" onSubmit={approveManual}>
+        <form className="stack form admin-manual-form" onSubmit={addManual}>
+          <h2 className="admin-section-title">{t('adminManualTitle')}</h2>
           <label className="field">
-            <span>{t('adminManualLabel')}</span>
+            <span>{t('adminManualName')}</span>
+            <input
+              value={manualName}
+              onChange={(e) => onManualNameChange(e.target.value)}
+              autoComplete="name"
+            />
+          </label>
+          <label className="field">
+            <span>{t('adminManualCode')} *</span>
             <input
               value={manualCode}
-              onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+              onChange={(e) => {
+                setCodeTouched(true)
+                setManualCode(e.target.value.toUpperCase())
+              }}
               placeholder="MARROS"
               autoComplete="off"
+              required
+            />
+          </label>
+          <div className="admin-manual-row">
+            <label className="field">
+              <span>{t('dateLabel')} *</span>
+              <select
+                value={manualDate}
+                onChange={(e) => setManualDate(e.target.value)}
+                required
+              >
+                {dates.map((d) => (
+                  <option key={d} value={d}>
+                    {formatDateLocale(d, dateLocale)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>{t('slotLabel')} *</span>
+              <select
+                value={manualSlot}
+                onChange={(e) => setManualSlot(e.target.value)}
+                required
+              >
+                {TIME_SLOTS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <label className="field">
+            <span>{t('emailLabel')}</span>
+            <input
+              type="email"
+              value={manualEmail}
+              onChange={(e) => setManualEmail(e.target.value)}
+              autoComplete="email"
+            />
+          </label>
+          <label className="field">
+            <span>{t('phoneLabel')}</span>
+            <input
+              value={manualPhone}
+              onChange={(e) => setManualPhone(e.target.value)}
+              autoComplete="tel"
             />
           </label>
           <button className="btn btn-primary" type="submit" disabled={busy}>
-            {t('adminManualApprove')}
+            {t('adminManualSubmit')}
           </button>
           <p className="body muted">{t('adminManualHint')}</p>
         </form>
@@ -400,84 +706,54 @@ export function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {dates.map((d) => (
-                <tr key={d}>
-                  <th scope="row">{formatDateShort(d, dateLocale)}</th>
-                  {TIME_SLOTS.map((s) => {
-                    const cell = bySlot.get(`${d}|${s.id}`) || []
-                    const hasApproved = cell.some(
-                      (b) => b.status === 'approved' || b.status === 'done',
-                    )
-                    return (
-                      <td
-                        key={s.id}
-                        className={
-                          hasApproved
-                            ? 'cell-approved'
-                            : cell.length
-                              ? 'cell-pending'
-                              : 'cell-free'
-                        }
-                      >
-                        {cell.length === 0 ? (
-                          <span className="cell-empty">{t('adminSlotFree')}</span>
-                        ) : (
-                          cell.map((b) => (
-                            <div
-                              key={`${b.participantCode}-${b.date}-${b.slotId}-${b.status}`}
-                              className={
-                                b.status === 'approved' || b.status === 'done'
-                                  ? 'chip-approved'
-                                  : 'chip-pending'
-                              }
-                              title={`${b.participantCode} · ${b.status}`}
-                            >
-                              <strong>{b.contactName || b.participantCode}</strong>
-                              <span>
-                                {b.participantCode}
-                                {b.status === 'pending' ? ` · ${t('adminSlotPending')}` : ''}
-                              </span>
-                            </div>
-                          ))
-                        )}
+              {dates.map((d) => {
+                const pastDay = isDayPast(d)
+                const expanded = expandedPastDays.has(d)
+                if (pastDay && !expanded) {
+                  const count = dayBookingCount(d)
+                  return (
+                    <tr key={d} className="row-past-collapsed">
+                      <td colSpan={1 + TIME_SLOTS.length}>
+                        <button
+                          type="button"
+                          className="admin-day-summary"
+                          onClick={() => togglePastDay(d)}
+                        >
+                          <span>
+                            {formatDateShort(d, dateLocale)} · {t('adminDayPast')}
+                            {count > 0 ? ` · ${count} ${t('adminDayBookings')}` : ''}
+                          </span>
+                          <span>{t('adminExpandDay')}</span>
+                        </button>
                       </td>
-                    )
-                  })}
-                </tr>
-              ))}
+                    </tr>
+                  )
+                }
+                return (
+                  <tr key={d} className={pastDay ? 'row-past-expanded' : undefined}>
+                    <th scope="row">
+                      {formatDateShort(d, dateLocale)}
+                      {pastDay && (
+                        <button
+                          type="button"
+                          className="admin-day-collapse"
+                          onClick={() => togglePastDay(d)}
+                        >
+                          {t('adminCollapseDay')}
+                        </button>
+                      )}
+                    </th>
+                    {renderScheduleCells(d)}
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
 
         <div className="admin-columns">
-          <section className="admin-col">
-            <h2 className="admin-section-title">
-              {t('adminColPending')} ({pending.length})
-            </h2>
-            <div className="admin-list">
-              {pending.length === 0 && <p className="body muted">{t('adminNoneInCol')}</p>}
-              {pending.map((b) => (
-                <BookingCard
-                  key={`p-${b.participantCode}-${b.date}-${b.slotId}`}
-                  {...cardProps(b)}
-                />
-              ))}
-            </div>
-          </section>
-          <section className="admin-col">
-            <h2 className="admin-section-title">
-              {t('adminColApproved')} ({approved.length})
-            </h2>
-            <div className="admin-list">
-              {approved.length === 0 && <p className="body muted">{t('adminNoneInCol')}</p>}
-              {approved.map((b) => (
-                <BookingCard
-                  key={`a-${b.participantCode}-${b.date}-${b.slotId}`}
-                  {...cardProps(b)}
-                />
-              ))}
-            </div>
-          </section>
+          {renderColumn(t('adminColPending'), pendingActive, pendingPast)}
+          {renderColumn(t('adminColApproved'), approvedActive, approvedPast)}
         </div>
 
         {rows.length === 0 && !busy && (

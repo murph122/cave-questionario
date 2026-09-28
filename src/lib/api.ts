@@ -164,7 +164,7 @@ export async function adminSetStatus(
   password: string,
   participantCode: string,
   status: 'approved' | 'pending' | 'cancelled' | 'done',
-  extra?: { date?: string; slotId?: string; contactName?: string; email?: string },
+  extra?: { date?: string; slotId?: string; contactName?: string; email?: string; phone?: string },
 ) {
   return postJsonWithTimeout(
     '/api/admin',

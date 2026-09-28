@@ -129,13 +129,18 @@ function doPost(e) {
         if (status === 'cancelled' || status === 'pending') {
           return json_({ ok: false, error: 'not_found' })
         }
+        var createDate = normalizeDate_(data.date || '')
+        var createSlot = normalizeSlot_(data.slotId || '')
+        if (!createDate || !createSlot) {
+          return json_({ ok: false, error: 'date_and_slot_required' })
+        }
         ensureBookingsHeader_()
         bookingsSheet_().appendRow([
           new Date(),
           data.bookingId || Utilities.getUuid(),
           codeA,
-          dateForSheet_(normalizeDate_(data.date || '')),
-          normalizeSlot_(data.slotId || ''),
+          dateForSheet_(createDate),
+          createSlot,
           data.contactName || 'manual',
           data.email || '',
           data.phone || '',

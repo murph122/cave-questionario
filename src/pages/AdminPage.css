@@ -45,6 +45,24 @@
   margin-bottom: 0.5rem;
 }
 
+.admin-manual-form {
+  padding: 1rem;
+  border: 1px solid rgba(94, 234, 212, 0.22);
+  background: rgba(6, 22, 30, 0.45);
+}
+
+.admin-manual-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .admin-manual-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .admin-schedule-wrap {
   overflow-x: auto;
   border: 1px solid rgba(148, 163, 184, 0.22);
@@ -91,6 +109,10 @@
   background: rgba(34, 197, 94, 0.1);
 }
 
+.cell-past {
+  opacity: 0.55;
+}
+
 .cell-empty {
   opacity: 0.55;
 }
@@ -120,4 +142,121 @@
 .chip-approved span {
   opacity: 0.85;
   font-size: 0.75rem;
+}
+
+.chip-past-compact {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: rgba(186, 230, 253, 0.75);
+}
+
+.admin-day-summary {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  appearance: none;
+  border: none;
+  background: rgba(8, 20, 28, 0.65);
+  color: rgba(186, 230, 253, 0.88);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-day-summary:hover {
+  background: rgba(14, 36, 48, 0.85);
+  color: #e0f2fe;
+}
+
+.row-past-collapsed td {
+  padding: 0;
+}
+
+.admin-day-collapse {
+  display: block;
+  margin-top: 0.35rem;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #7dd3fc;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.admin-past-block {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.admin-past-heading {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.admin-past-row {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(6, 16, 22, 0.4);
+}
+
+.admin-past-summary {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-past-main {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-past-meta {
+  color: rgba(148, 163, 184, 0.9);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.admin-past-toggle {
+  color: #7dd3fc;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.admin-past-detail {
+  padding: 0 0.65rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .admin-past-summary {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
 }

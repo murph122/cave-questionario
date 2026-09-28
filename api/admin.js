@@ -64,6 +64,7 @@ export default async function handler(req, res) {
           slotId: body.slotId || '',
           contactName: body.contactName || '',
           email: body.email || '',
+          phone: body.phone || '',
           note: body.note || 'approved-from-admin',
         })
         return json(res, 200, { ok: true, status })
